@@ -16,9 +16,7 @@ async (nethmina, mek, m, {
     groupAdmins, isBotAdmins, isAdmins, reply
 }) => {
     try {
-        await nethmina.sendPresenceUpdate('recording', from);
-        await nethmina.sendMessage(from, { audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/cmd-voice/alive.mp3" }, mimetype: 'audio/mpeg', ptt: true }, { quoted: mek });
-        return await nethmina.sendMessage(from, {
+       return await nethmina.sendMessage(from, {
             image: { url: config.ALIVE_IMG },
             caption: config.ALIVE_MSG
         }, { quoted: mek });
