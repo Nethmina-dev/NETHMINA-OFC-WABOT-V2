@@ -10,8 +10,7 @@ console.log("✅ AI Plugin Loaded");
 // REGISTER AS REPLY HANDLER
 cmd({
     // ❌ pattern දාන්න එපා (VERY IMPORTANT)
-
-    filter: (text) => {
+    filter: (text, { sender }) => {
         console.log("📩 MESSAGE RECEIVED:", text);
 
         if (!text) return false;
@@ -33,11 +32,12 @@ cmd({
 // MAIN FUNCTION
 async (conn, mek, m, { from, body, reply }) => {
     try {
+        if (mek.key.fromMe) return; // ignore bot own messages
+
         const userMsg = body.trim();
 
         // ✅ Memory setup
         if (!userMemory[from]) userMemory[from] = [];
-
         userMemory[from].push(userMsg);
         userMemory[from] = userMemory[from].slice(-5);
 
@@ -66,53 +66,32 @@ Flow:
 5. Ask for payment screenshot
 `;
 
-        // ✅ Build request
-        const contents = [
+        // ✅ Build messages for Gemini API
+        const messages = [
             {
-                role: "user",
-                parts: [{ text: systemPrompt }]
+                role: "system",
+                content: [{ type: "text", text: systemPrompt }]
             },
             ...userMemory[from].map(msg => ({
                 role: "user",
-                parts: [{ text: msg }]
+                content: [{ type: "text", text: msg }]
             }))
         ];
 
         // ✅ API CALL
-        // inside function
-if (mek.key.fromMe) return;
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta2/models/gemini-pro-preview:generate?key=${config.GEMINI_API_KEY}`,
+            {
+                prompt: { messages }
+            },
+            { headers: { "Content-Type": "application/json" } }
+        );
 
-const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta2/models/gemini-pro-preview:generate?key=${config.GEMINI_API_KEY}`,
-    {
-        prompt: {
-            messages: [
-                {
-                    "role": "system",
-                    "content": [
-                        { "type": "text", "text": systemPrompt }
-                    ]
-                },
-                ...userMemory[from].map(msg => ({
-                    "role": "user",
-                    "content": [
-                        { "type": "text", "text": msg }
-                    ]
-                }))
-            ]
-        }
-    }
-);
+        // ✅ Get AI reply safely
+        let aiReply = response.data?.output?.messages?.find(m => m.type === "output_text")?.text
+            || "⚠️ AI service busy. Try again later.";
 
-const aiReply = response.data?.output?.messages?.find(
-    m => m.type === "output_text"
-)?.text || "⚠️ Try again later.";
-        // ✅ Safe response
-        const aiReply =
-            response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-            "⚠️ Server busy. Try again later.";
-
-        // Save bot reply
+        // Save bot reply in memory
         userMemory[from].push(aiReply);
 
         // ✅ Send reply
