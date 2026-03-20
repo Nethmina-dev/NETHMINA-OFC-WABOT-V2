@@ -80,15 +80,14 @@ Flow:
 
         // ✅ API CALL
         const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.GEMINI_API_KEY}`,
-            { contents },
-            {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }
-        );
-
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${config.GEMINI_API_KEY}`,
+    { contents },
+    {
+        headers: {
+            "Content-Type": "application/json"
+        }
+    }
+);
         // ✅ Safe response
         const aiReply =
             response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
