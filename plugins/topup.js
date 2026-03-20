@@ -1,40 +1,69 @@
-const config = require('../config');
-const { cmd } = require('../command');
-const axios = require('axios');
+const axios = require("axios");
+const config = require("../config");
+const { addReplyHandler } = require("../command");
 
-const GEMINI_API_KEY = "AIzaSyChqVNBwlTbGsJvZ4-qzxYbXqlG2Pf3N8A";
-
-// Memory (basic chat history per user)
+// Memory
 let userMemory = {};
 
-cmd({
-    pattern: "topup_logic",
-    desc: "Auto AI Reply (No Command Needed)",
-    category: "main",
-    filename: __filename
-},
-async (conn, mek, m, { from, body, isCmd, reply }) => {
+addReplyHandler(
+    // 🔍 FILTER → which messages should trigger AI
+    async (text, { sender }) => {
+        if (!text) return false;
 
-    try {
-        // ❌ Ignore commands
-        if (isCmd) return;
+        // ❌ ignore commands
+        if (text.startsWith(".")) return false;
 
-        // ❌ Ignore empty messages
-        if (!body) return;
+        return true; // all normal messages trigger AI
+    },
 
-        // ❌ Ignore group messages (optional - remove if needed)
-        if (from.includes("@g.us")) return;
+    // ⚙️ FUNCTION
+    async (conn, mek, m, { from, body, reply }) => {
+        try {
+            const userMsg = body.trim();
 
-        // --- User Message ---
-        const userMsg = body.trim();
+            if (!userMemory[from]) userMemory[from] = [];
 
-        // --- Chat Memory ---
-        if (!userMemory[from]) userMemory[from] = [];
+            userMemory[from].push(userMsg);
+            userMemory[from] = userMemory[from].slice(-5);
 
-        userMemory[from].push({
-            role: "user",
-            text: userMsg
-        });
+            const systemPrompt = `
+You are a WhatsApp AI assistant for a Gaming TopUp Store.
+
+Reply short, friendly.
+
+Prices:
+Free Fire 100 Diamonds = Rs.350
+PUBG 60 UC = Rs.380
+`;
+
+            const contents = [
+                {
+                    role: "user",
+                    parts: [{ text: systemPrompt }]
+                },
+                ...userMemory[from].map(msg => ({
+                    role: "user",
+                    parts: [{ text: msg }]
+                }))
+            ];
+
+            const response = await axios.post(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.GEMINI_API_KEY}`,
+                { contents },
+                { headers: { "Content-Type": "application/json" } }
+            );
+
+            const aiReply =
+                response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+                "Try again later.";
+
+            return reply(aiReply);
+
+        } catch (e) {
+            console.log("AI ERROR:", e?.response?.data || e.message);
+        }
+    }
+);        });
 
         // Limit memory (last 5 messages)
         userMemory[from] = userMemory[from].slice(-5);
