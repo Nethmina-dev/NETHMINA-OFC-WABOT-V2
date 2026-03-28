@@ -3,10 +3,7 @@ const {
   default: makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
-  jidNormalizedUser,
   getContentType,
-  proto,
-  downloadContentFromMessage,
   fetchLatestBaileysVersion,
   Browsers
 } = require("@whiskeysockets/baileys");
@@ -18,7 +15,6 @@ const express = require("express");
 
 const config = require("./config");
 const { sms } = require("./lib/msg");
-const { getGroupAdmins } = require("./lib/functions");
 const { commands, replyHandlers } = require("./command");
 const { File } = require("megajs");
 
@@ -30,7 +26,9 @@ app.get("/", (req, res) => {
   res.send("NETHMINA-OFC WA-BOT Running Successfully 🚀");
 });
 
-app.listen(port, () => console.log(`Server running → http://localhost:${port}`));
+app.listen(port, () =>
+  console.log(`Server running → http://localhost:${port}`)
+);
 
 // ====================== CONFIG ======================
 const prefix = ".";
@@ -51,8 +49,8 @@ async function ensureSessionFile() {
     }
 
     console.log("🔄 Downloading session from MEGA…");
-    const sessdata = config.SESSION_ID;
-    const file = File.fromURL(`https://mega.nz/file/${sessdata}`);
+    const sess = config.SESSION_ID;
+    const file = File.fromURL(`https://mega.nz/file/${sess}`);
 
     file.download((err, data) => {
       if (err) {
@@ -60,7 +58,9 @@ async function ensureSessionFile() {
         process.exit(1);
       }
 
-      fs.mkdirSync(path.join(__dirname, "/auth_info_baileys/"), { recursive: true });
+      fs.mkdirSync(path.join(__dirname, "/auth_info_baileys/"), {
+        recursive: true
+      });
       fs.writeFileSync(credsPath, data);
 
       console.log("✅ Session restored. Starting bot...");
@@ -97,7 +97,10 @@ async function connectToWA() {
     const { connection, lastDisconnect } = update;
 
     if (connection === "close") {
-      if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
+      if (
+        lastDisconnect?.error?.output?.statusCode !==
+        DisconnectReason.loggedOut
+      ) {
         connectToWA();
       }
     }
@@ -128,22 +131,44 @@ Type *.menu* to see commands
 
   nethmina.ev.on("creds.update", saveCreds);
 
+  // ====================== STATUS AUTO SEEN + AUTO REACT ======================
+  nethmina.ev.on("messages.upsert", async ({ messages }) => {
+    for (const msg of messages) {
+      if (msg.key.remoteJid === "status@broadcast") {
+        // AUTO SEEN
+        try {
+          await nethmina.readMessages([msg.key]);
+          console.log("👀 Auto Seen Status");
+        } catch (err) {
+          console.log("❌ Auto Seen Error:", err);
+        }
+
+        // AUTO REACT ❤️
+        try {
+          await nethmina.sendMessage("status@broadcast", {
+            react: { text: "❤️", key: msg.key }
+          });
+          console.log("❤️ Auto React Sent");
+        } catch (err) {
+          console.log("❌ Auto React Error:", err);
+        }
+      }
+    }
+  });
+
   // ====================== MESSAGE HANDLING ======================
   nethmina.ev.on("messages.upsert", async ({ messages }) => {
     for (const mek of messages) {
       if (!mek.message) continue;
 
-      // Run anti-delete ON MESSAGE
-      if (global.pluginHooks.length > 0) {
-        for (const plugin of global.pluginHooks) {
-          if (plugin.onMessage) {
-            plugin.onMessage(nethmina, mek);
-          }
-        }
+      // Anti-delete plugin
+      for (const plugin of global.pluginHooks) {
+        if (plugin.onMessage) plugin.onMessage(nethmina, mek);
       }
 
       const from = mek.key.remoteJid;
       const type = getContentType(mek.message);
+
       const body =
         type === "conversation"
           ? mek.message.conversation
@@ -151,14 +176,16 @@ Type *.menu* to see commands
             mek.message[type]?.caption ||
             "";
 
-      const sender =
-        mek.key.fromMe
-          ? nethmina.user.id
-          : mek.key.participant || mek.key.remoteJid;
+      const sender = mek.key.fromMe
+        ? nethmina.user.id
+        : mek.key.participant || mek.key.remoteJid;
 
       const senderNumber = sender.split("@")[0];
       const isCmd = body.startsWith(prefix);
-      const commandName = isCmd ? body.slice(prefix.length).trim().split(" ")[0] : "";
+      const commandName = isCmd
+        ? body.slice(prefix.length).trim().split(" ")[0]
+        : "";
+
       const args = body.trim().split(/ +/).slice(1);
       const q = args.join(" ");
 
@@ -172,7 +199,7 @@ Type *.menu* to see commands
         });
       }
 
-      // ===== COMMAND HANDLING =====
+      // COMMAND HANDLER
       if (isCmd) {
         const cmd = commands.find(
           (c) =>
@@ -196,7 +223,7 @@ Type *.menu* to see commands
         }
       }
 
-      // ===== REPLY HANDLERS =====
+      // REPLY HANDLERS
       for (const handler of replyHandlers) {
         if (handler.filter(body, { sender, message: mek })) {
           handler.function(nethmina, mek, sms(nethmina, mek), {
@@ -218,7 +245,7 @@ Type *.menu* to see commands
         try {
           await plugin.onDelete(nethmina, updates);
         } catch (err) {
-          console.log("onDelete error:", err);
+          console.log("❌ onDelete error:", err);
         }
       }
     }
@@ -233,4 +260,6 @@ app.get("/", (req, res) => {
   res.send("Hey, NETHMINA-OFC started✅");
 });
 
-app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
+app.listen(port, () =>
+  console.log(`Server listening on http://localhost:${port}`)
+);
