@@ -5,40 +5,13 @@ const { ytmp3 } = require("@vreden/youtube_scraper");
 cmd(
   {
     pattern: "song",
+    alias: ["mp3", "ytmp3", "music"],
     react: "🎶",
     desc: "Download Song",
     category: "download",
     filename: __filename,
   },
-  async (
-    danuwa,
-    mek,
-    m,
-    {
-      from,
-      quoted,
-      body,
-      isCmd,
-      command,
-      args,
-      q,
-      isGroup,
-      sender,
-      senderNumber,
-      botNumber2,
-      botNumber,
-      pushname,
-      isMe,
-      isOwner,
-      groupMetadata,
-      groupName,
-      participants,
-      groupAdmins,
-      isBotAdmins,
-      isAdmins,
-      reply,
-    }
-  ) => {
+  async (danuwa, mek, m, { from, q, reply }) => {
     try {
       if (!q) return reply("❌ *Please provide a song name or YouTube link*");
 
@@ -46,24 +19,38 @@ cmd(
       const data = search.videos[0];
       const url = data.url;
 
+      // Download audio data
+      const quality = "192";
+      const songData = await ytmp3(url, quality);
+
+      // Format file size if available
+      let fileSize = songData?.download?.fileSizeH || songData?.download?.size || "Unknown";
+
       let desc = `
-Song downloader
-🎬 *Title:* ${data.title}
-⏱️ *Duration:* ${data.timestamp}
-📅 *Uploaded:* ${data.ago}
-👀 *Views:* ${data.views.toLocaleString()}
-🔗 *Watch Here:* ${data.url}
+*🎧❤️ NETHMINA OFC SONG DOWNLOADER ❤️🎧*
+
+┌───────────────────
+├ *📀 Title:* ${data.title}
+├ *⏱️ Duration:* ${data.timestamp}
+├ *📆 Uploaded:* ${data.ago}
+├ *👁️ Views:* ${data.views.toLocaleString()}
+├ *👍 Likes:* ${data.likes || "N/A"}
+├ *📡 Channel:* ${data.author?.name || "Unknown"}
+├ *🔗 Watch/Download:* ${data.url}
+├ *📥 Size:* ${fileSize}
+└───────────────────
+
+> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||
 `;
 
+      // Send info message
       await danuwa.sendMessage(
         from,
         { image: { url: data.thumbnail }, caption: desc },
         { quoted: mek }
       );
 
-      const quality = "192";
-      const songData = await ytmp3(url, quality);
-
+      // Duration Check (max 30 mins)
       let durationParts = data.timestamp.split(":").map(Number);
       let totalSeconds =
         durationParts.length === 3
@@ -74,6 +61,7 @@ Song downloader
         return reply("⏳ *Sorry, audio files longer than 30 minutes are not supported.*");
       }
 
+      // Send Audio as Voice/Audio File
       await danuwa.sendMessage(
         from,
         {
@@ -83,18 +71,19 @@ Song downloader
         { quoted: mek }
       );
 
+      // Send as Document
       await danuwa.sendMessage(
         from,
         {
           document: { url: songData.download.url },
           mimetype: "audio/mpeg",
           fileName: `${data.title}.mp3`,
-          caption: "🎶 *Your song is ready to be played!*",
+          caption: "🎶 *Your song is ready!*",
         },
         { quoted: mek }
       );
 
-      return reply("✅ Thank you");
+      return reply("✅ Thank you!");
     } catch (e) {
       console.log(e);
       reply(`❌ *Error:* ${e.message} 😞`);
