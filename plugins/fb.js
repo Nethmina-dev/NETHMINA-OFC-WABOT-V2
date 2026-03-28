@@ -10,7 +10,7 @@ cmd(
     category: "download",
     filename: __filename,
   },
-  async (danuwa, mek, m, { from, q, reply }) => {
+  async (nethmina, mek, m, { from, q, reply }) => {
     try {
       if (!q) return reply("*Please provide a valid Facebook video URL!* ❤️");
 
@@ -39,7 +39,7 @@ cmd(
 > © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ᴡᴀ-ʙᴏᴛ ||
 `;
 
-      await danuwa.sendMessage(
+      await nethmina.sendMessage(
         from,
         {
           image: {
@@ -50,7 +50,7 @@ cmd(
         { quoted: mek }
       );
 
-      await danuwa.sendMessage(
+      await nethmina.sendMessage(
         from,
         {
           video: { url: bestQualityUrl },
