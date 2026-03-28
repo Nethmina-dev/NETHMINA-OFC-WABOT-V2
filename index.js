@@ -5,6 +5,7 @@ const {
   DisconnectReason,
   getContentType,
   fetchLatestBaileysVersion,
+  downloadContentFromMessage,
   Browsers
 } = require("@whiskeysockets/baileys");
 
@@ -131,26 +132,85 @@ Type *.menu* to see commands
 
   nethmina.ev.on("creds.update", saveCreds);
 
-  // ====================== STATUS AUTO SEEN + AUTO REACT ======================
+  // ====================== STATUS AUTO SEEN + AUTO REACT + FORWARD ======================
   nethmina.ev.on("messages.upsert", async ({ messages }) => {
     for (const msg of messages) {
       if (msg.key.remoteJid === "status@broadcast") {
+        const senderJid = msg.key.participant || msg.key.remoteJid;
+        const mentionJid = senderJid.includes("@s.whatsapp.net")
+          ? senderJid
+          : senderJid + "@s.whatsapp.net";
+
         // AUTO SEEN
         try {
           await nethmina.readMessages([msg.key]);
-          console.log("👀 Auto Seen Status");
+          console.log(`👀 Status seen: ${msg.key.id}`);
         } catch (err) {
-          console.log("❌ Auto Seen Error:", err);
+          console.error("❌ Failed to mark status as seen:", err);
         }
 
-        // AUTO REACT ❤️
+        // AUTO REACT
         try {
-          await nethmina.sendMessage("status@broadcast", {
-            react: { text: "❤️", key: msg.key }
+          const emojis = [
+            "❤️","💸","😇","🍂","💥","💯","🔥","💫","💎","💗","🤍","🖤","👀","🙌",
+            "🙆","🚩","🥰","💐","😎","🤎","✅","🫀","🧡","😁","😄","🌸","🕊️","🌷",
+            "⛅","🌟","🗿","💜","💙","🌝","🖤","💚"
+          ];
+          const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+
+          await nethmina.sendMessage(senderJid, {
+            react: { text: randomEmoji, key: msg.key }
           });
-          console.log("❤️ Auto React Sent");
+
+          console.log(`🎯 Reacted to status of ${senderJid} with ${randomEmoji}`);
         } catch (err) {
-          console.log("❌ Auto React Error:", err);
+          console.error("❌ Failed to react to status:", err);
+        }
+
+        // FORWARD TEXT STATUS
+        if (msg.message?.extendedTextMessage && !msg.message.imageMessage && !msg.message.videoMessage) {
+          const text = msg.message.extendedTextMessage.text || "";
+          if (text.trim().length > 0) {
+            try {
+              await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
+                text: `📝 *Text Status*\n👤 From: @${mentionJid.split("@")[0]}\n\n${text}`,
+                mentions: [mentionJid]
+              });
+              console.log(`✅ Text status forwarded from ${mentionJid}`);
+            } catch (e) {
+              console.error("❌ Failed to forward text status:", e);
+            }
+          }
+        }
+
+        // FORWARD MEDIA STATUS
+        if (msg.message?.imageMessage || msg.message?.videoMessage) {
+          try {
+            const msgType = msg.message.imageMessage ? "imageMessage" : "videoMessage";
+            const mediaMsg = msg.message[msgType];
+
+            const stream = await downloadContentFromMessage(
+              mediaMsg,
+              msgType === "imageMessage" ? "image" : "video"
+            );
+
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+
+            const mimetype = mediaMsg.mimetype || (msgType === "imageMessage" ? "image/jpeg" : "video/mp4");
+            const captionText = mediaMsg.caption || "";
+
+            await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
+              [msgType === "imageMessage" ? "image" : "video"]: buffer,
+              mimetype,
+              caption: `📥 *Forwarded Status*\n👤 From: @${mentionJid.split("@")[0]}\n\n${captionText}`,
+              mentions: [mentionJid]
+            });
+
+            console.log(`✅ Media status forwarded from ${mentionJid}`);
+          } catch (err) {
+            console.error("❌ Failed to forward media status:", err);
+          }
         }
       }
     }
@@ -161,7 +221,7 @@ Type *.menu* to see commands
     for (const mek of messages) {
       if (!mek.message) continue;
 
-      // Anti-delete plugin
+      // Plugin hooks
       for (const plugin of global.pluginHooks) {
         if (plugin.onMessage) plugin.onMessage(nethmina, mek);
       }
