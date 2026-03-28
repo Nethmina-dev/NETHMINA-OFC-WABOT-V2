@@ -10,35 +10,7 @@ cmd(
     category: "download",
     filename: __filename,
   },
-  async (
-    danuwa,
-    mek,
-    m,
-    {
-      from,
-      quoted,
-      body,
-      isCmd,
-      command,
-      args,
-      q,
-      isGroup,
-      sender,
-      senderNumber,
-      botNumber2,
-      botNumber,
-      pushname,
-      isMe,
-      isOwner,
-      groupMetadata,
-      groupName,
-      participants,
-      groupAdmins,
-      isBotAdmins,
-      isAdmins,
-      reply,
-    }
-  ) => {
+  async (danuwa, mek, m, { from, q, reply }) => {
     try {
       if (!q) return reply("*Please provide a valid Facebook video URL!* ❤️");
 
@@ -49,25 +21,29 @@ cmd(
       reply("*Downloading your video...* ❤️");
 
       const result = await getFbVideoInfo(q);
+
       if (!result || (!result.sd && !result.hd)) {
         return reply("*Failed to download video. Please try again later.* ☹️");
       }
 
       const { title, sd, hd } = result;
       const bestQualityUrl = hd || sd;
-      const qualityText = hd ? "HD" : "SD";
 
       const desc = `
-Your fb video
-👻 *Title*: ${title || "Unknown"}
-👻 *Quality*: ${qualityText}
+*📹 NETHMINA OFC FB DOWNLODER 📹*
+
+*📍 Title:* ${title || "Unknown"}
+
+*🎨 Quality:* ${qualityText}
+
+> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ᴡᴀ-ʙᴏᴛ ||
 `;
 
       await danuwa.sendMessage(
         from,
         {
           image: {
-            url: "https://github.com/DANUWA-MD/DANUWA-MD/blob/main/images/fbdownloader.png?raw=true",
+            url: "https://github.com/Nethmina-dev/BOT-DATA/blob/main/Logo/ChatGPT%20Image%20Mar%2018,%202026,%2005_47_58%20PM.png?raw=true",
           },
           caption: desc,
         },
@@ -78,12 +54,12 @@ Your fb video
         from,
         {
           video: { url: bestQualityUrl },
-          caption: `*📥 Downloaded in ${qualityText} quality*`,
+          caption: `📥 *Downloaded in ${hd ? "HD" : "SD"} quality*`,
         },
         { quoted: mek }
       );
 
-      return reply("Thank you for using DANUWA-MD");
+      return reply("Thank you for using NETHMINA OFC WA-BOT ❤️");
     } catch (e) {
       console.error(e);
       reply(`*Error:* ${e.message || e}`);
