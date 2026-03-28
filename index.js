@@ -151,11 +151,7 @@ Type *.menu* to see commands
 
         // AUTO REACT
         try {
-          const emojis = [
-            "❤️","💸","😇","🍂","💥","💯","🔥","💫","💎","💗","🤍","🖤","👀","🙌",
-            "🙆","🚩","🥰","💐","😎","🤎","✅","🫀","🧡","😁","😄","🌸","🕊️","🌷",
-            "⛅","🌟","🗿","💜","💙","🌝","🖤","💚"
-          ];
+          const emojis = ['❤️', '🩷', '🩵', '🩶', '💜', '💙', '💚', '💛', '🧡', '🤍', '🤎', '🖤','💖', '💘', '💝', '💗', '💕', '💞', '💓', '❣️', '💟', '❤️‍🔥', '❤️‍🩹', '🫶', '🫰'];
           const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
           await nethmina.sendMessage(senderJid, {
