@@ -26,7 +26,7 @@ cmd(
 
       let formattedResults = results.map((v, i) => {
         return `
-*🎧❤️ NETHMINA OFC SONG DOWNLOADER ❤️🎧*
+*🔎❤️ NETHMINA OFC YOUTUBE SEARCH ❤️🔍*
 
 ┌───────────────────
 ├ *🎬 Result:* ${i + 1}
