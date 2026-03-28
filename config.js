@@ -10,6 +10,8 @@ ALIVE_IMG: process.env.ALIVE_IMG || "https://github.com/Nethmina-dev/BOT-DATA/bl
 ALIVE_MSG: process.env.ALIVE_MSG || "*Hello👋 NETHMINA Is Alive Now😍*",
 BOT_OWNER: '94701332157',  // Replace with the owner's phone number
 GEMINI_API_KEY: process.env.GEMINI_API_KEY || "AIzaSyDLwgbbKpQ4vPu5yziURbrzZJUoERBDDPk",
+AUTO_STATUS_SEEN: 'true',
+AUTO_STATUS_REACT: 'true',
 
 
 
