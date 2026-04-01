@@ -1,6 +1,6 @@
 const { cmd } = require('../command');
 const config = require('../config');
-const axios = require('axios');
+const fs = require('fs'); // Local file read
 
 cmd({
     pattern: "alive",
@@ -19,10 +19,9 @@ async (nethmina, mek, m, {
         // Bot recording presence
         await nethmina.sendPresenceUpdate('recording', from);
 
-        // Download voice note from GitHub
-        const audioUrl = "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.opus";
-        const response = await axios.get(audioUrl, { responseType: 'arraybuffer' });
-        const buffer = Buffer.from(response.data);
+        // Read local voice note
+        const audioPath = './media/voice/alive.opus';
+        const buffer = fs.readFileSync(audioPath);
 
         // Send voice note
         await nethmina.sendMessage(from, {
