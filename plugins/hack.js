@@ -7,7 +7,7 @@ cmd({
     react: "👨‍💻",
     filename: __filename
 },
-async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
+async (nethmina, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
     try {
       await nethmina.sendMessage(
             from,
@@ -51,7 +51,7 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
         ];
 
         for (const line of steps) {
-            await conn.sendMessage(from, { text: line }, { quoted: mek });
+            await nethmina.sendMessage(from, { text: line }, { quoted: mek });
             await new Promise(resolve => setTimeout(resolve, 1000)); // Adjust the delay as needed
         }
     } catch (e) {
