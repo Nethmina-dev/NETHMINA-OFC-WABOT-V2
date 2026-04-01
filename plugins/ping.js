@@ -7,25 +7,31 @@ cmd(
     category: "main",
     filename: __filename,
   },
-  async (nethmina, mek, m, { reply, from }) => {
-    // 1️⃣ React to the message
+  async (nethmina, mek, m, { from }) => {
     try {
-      await nethmina.sendMessage(from, { react: { text: "🏓", key: mek.key } });
-    } catch (e) {
-      console.log("Reaction failed:", e);
-    }
-      // 1️⃣ Send initial "🏓 Pinging..." message
-      const sentMsg = await nethmina.sendMessage(from, { text: "🏓 Pinging..." }, { quoted: mek });
+      // 1️⃣ React to the original message
+      try {
+        await nethmina.sendMessage(from, { react: { text: "🏓", key: mek.key } });
+      } catch (e) {
+        console.log("Reaction failed:", e);
+      }
 
-      // 2️⃣ Calculate response time
+      // 2️⃣ Send initial "🏓 Pinging..." message
+      const sentMsg = await nethmina.sendMessage(
+        from,
+        { text: "🏓 Pinging..." },
+        { quoted: mek }
+      );
+
+      // 3️⃣ Calculate response time
       const start = Date.now();
-      // Optional: do something here if needed
       const end = Date.now();
 
-      // 3️⃣ Edit the previous message with the response time
-      await nethmina.editMessageText(
-        sentMsg.key, // the key of the message to edit
-        `🏓 Pong! Response time: *${end - start}ms*`
+      // 4️⃣ Edit the previous message with response time
+      await nethmina.sendMessage(
+        from,
+        { text: `🏓 Pong! Response time: *${end - start}ms*` },
+        { quoted: mek, edit: sentMsg.key }
       );
     } catch (err) {
       console.log("Ping command error:", err);
