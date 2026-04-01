@@ -50,7 +50,7 @@ async (nethmina, mek, m, { from, quoted, reply }) => {
             audio: buffer,
             mimetype: 'audio/ogg; codecs=opus',
             ptt: true
-        }, { quoted: msg });
+        }, { quoted: mek });
 
         if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
@@ -61,7 +61,7 @@ async (nethmina, mek, m, { from, quoted, reply }) => {
             audio: { url: audioUrl },
             mimetype: 'audio/mpeg',
             ptt: true
-        }, { quoted: msg });
+        }, { quoted: mek });
     }
         // Send video note
         await nethmina.sendMessage(
