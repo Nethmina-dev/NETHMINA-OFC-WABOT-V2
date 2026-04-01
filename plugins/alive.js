@@ -3,7 +3,6 @@ const config = require('../config');
 
 cmd({
     pattern: "alive",
-    alias: ["bot","robo","robot"],
     react: "🎃",
     desc: "Check bot online or no.",
     category: "main",
@@ -32,8 +31,8 @@ async (nethmina, mek, m, { from, quoted, reply }) => {
         await nethmina.sendMessage(
             from,
             {
-                audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3" },
-                mimetype: 'audio/mpeg',
+                audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.opus" },
+                mimetype: 'audio/opus',
                 ptt: true
             },
             { quoted: mek }
