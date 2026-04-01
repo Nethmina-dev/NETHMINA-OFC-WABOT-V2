@@ -41,7 +41,8 @@
     "sharp": "^0.34.5",
     "os": "^0.1.2",
     "wa-sticker-formatter": "^4.4.4",
-    "canvas": "^3.2.3"
+    "canvas": "^3.2.3",
+    "qrcode": "^1.5.4"
     
   }
 }
