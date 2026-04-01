@@ -8,9 +8,15 @@ cmd({
     desc: "Check bot online or no.",
     category: "main",
     filename: __filename
+    
 },
 async (nethmina, mek, m, { from, quoted, reply }) => {
     try {
+        // Send reaction first
+        if (mek.key && mek.key.remoteJid) {
+            await nethmina.sendMessage(from, { react: { text: "🎃", key: mek.key } });
+        }
+        
         // Send video note
         await nethmina.sendMessage(
             from,
