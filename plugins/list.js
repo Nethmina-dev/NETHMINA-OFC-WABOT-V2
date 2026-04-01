@@ -9,7 +9,7 @@ cmd(
     category: "main",
     filename: __filename,
   },
-  async (danuwa, m, msg, { from, reply }) => {
+  async (nethmina, m, msg, { from, reply }) => {
     const commandMap = {};
     let totalCommands = 0;
 
@@ -41,6 +41,6 @@ Total Commands: *${totalCommands}*
     menuText += `╰━━━━━━━━━━━━━━━━━━━━━━⬣
 `;
 
-    await danuwa.sendMessage(from, { text: menuText }, { quoted: m });
+    await nethmina.sendMessage(from, { text: menuText }, { quoted: m });
   }
 );
