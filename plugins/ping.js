@@ -16,23 +16,23 @@ cmd(
         console.log("Reaction failed:", e);
       }
 
-      // 2️⃣ Send initial "🏓 Pinging..." message
+      // 2️⃣ Send "🏓 Pinging..." message and store the key
       const sentMsg = await nethmina.sendMessage(
         from,
-        { text: "🏓 Pinging..." },
-        { quoted: mek }
+        { text: "🏓 Pinging..." } // send without quoting
       );
 
       // 3️⃣ Calculate response time
       const start = Date.now();
       const end = Date.now();
 
-      // 4️⃣ Edit the previous message with response time
+      // 4️⃣ Edit the message using sendMessage + message key
       await nethmina.sendMessage(
         from,
         { text: `🏓 Pong! Response time: *${end - start}ms*` },
-        { quoted: mek, edit: sentMsg.key }
+        { edit: sentMsg.key }
       );
+
     } catch (err) {
       console.log("Ping command error:", err);
     }
