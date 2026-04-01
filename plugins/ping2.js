@@ -51,15 +51,13 @@ async(conn, mek, m, { from, quoted, reply }) => {
         }
 
         // 2️⃣ Send initial ping message
-        const startTime = Date.now();
-        const pingMsg = await conn.sendMessage(from, { text: '*_🪄 Pinging..._*' });
-        const endTime = Date.now();
-        const ping = endTime - startTime;
-
-        // 3️⃣ Edit previous message with final ping (Baileys v5)
-        await conn.sendMessage(from, { text: `*♻️ Pong! Response speed: ${ping}ms*` }, { edit: pingMsg.key });
+       const startTime = Date.now()
+        const message = await conn.sendMessage(from, { text: '*_🪄 Pinging..._*' })
+        const endTime = Date.now()
+        const ping = endTime - startTime
+        await conn.sendMessage(from, { text: `*♻️ Pong! Response speed: ${ping}ms*`}, { quoted: message })
     } catch (e) {
-        console.log(e);
-        reply(`${e}`);
+        console.log(e)
+        reply(`${e}`)
     }
 });
