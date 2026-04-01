@@ -1,6 +1,6 @@
 const { cmd } = require("../command");
 const sharp = require("sharp");
-const fs = require("fs");
+const fs = require("fs-extra");
 const { getRandom } = require("../lib/functions");
 
 async function makeCollage(images, columns, rows, outFile) {
