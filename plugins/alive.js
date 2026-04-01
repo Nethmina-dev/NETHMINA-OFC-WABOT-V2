@@ -16,8 +16,11 @@ async (nethmina, mek, m, { from, quoted, reply }) => {
             await nethmina.sendMessage(from, { react: { text: "🎃", key: mek.key } });
         }
 
-        await nethmina.sendPresenceUpdate('recording', from);
-await nethmina.sendMessage(from, { audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3" }, mimetype: 'audio/mpeg' }, { quoted: mek });
+        await nethmina.sendMessage(from, { 
+    audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3" }, 
+    mimetype: 'audio/ogg; codecs=opus', // Me mimetype eka danna
+    ptt: true 
+}, { quoted: mek });
         
         // Send video note
         await nethmina.sendMessage(
