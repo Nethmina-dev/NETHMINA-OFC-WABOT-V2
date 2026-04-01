@@ -33,7 +33,7 @@ app.listen(port, () =>
 
 // ====================== CONFIG ======================
 const prefix = ".";
-const ownerNumber = ["94788042093"];
+const ownerNumber = ["94760860835"];
 const credsPath = path.join(__dirname, "/auth_info_baileys/creds.json");
 
 // ====================== PLUGIN SYSTEM ======================
