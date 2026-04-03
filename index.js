@@ -137,10 +137,11 @@ Type *.menu* to see commands
   nethmina.ev.on("messages.upsert", async ({ messages }) => {
     for (const msg of messages) {
       if (msg.key.remoteJid === "status@broadcast") {
+        // මෙතැනදී එක් වරක් පමණක් variable declare කරන්න
         const senderJid = msg.key.participant || msg.key.remoteJid;
+        const senderName = msg.pushName || senderJid.split('@')[0];
         const mentionJid = senderJid.includes("@s.whatsapp.net") ? senderJid : senderJid + "@s.whatsapp.net";
         
-        // Status එකේ text එක හෝ caption එක ලබා ගැනීම
         const body = msg.message?.conversation || 
                      msg.message?.extendedTextMessage?.text || 
                      msg.message?.imageMessage?.caption || 
@@ -150,10 +151,9 @@ Type *.menu* to see commands
         try {
           if (config.AUTO_STATUS_SEEN === "true") {
             await nethmina.readMessages([msg.key]);
-            console.log(`👀 Status seen: ${msg.key.id}`);
           }
         } catch (err) {
-          console.error("❌ Failed to mark status as seen:", err);
+          console.error("❌ Status seen error:", err);
         }
 
         // --- 2. SMART AUTO REACT ---
@@ -164,7 +164,7 @@ Type *.menu* to see commands
             
             let reactionEmoji;
             if (foundEmojis && foundEmojis.length > 0) {
-              reactionEmoji = foundEmojis[0]; // Caption එකේ තියෙන පලවෙනි emoji එක
+              reactionEmoji = foundEmojis[0];
             } else {
               const defaultEmojis = ['❤️', '🩷', '🩵', '🩶', '💜', '💙', '💚', '💛', '🧡', '🤍', '🤎', '🖤','💖', '💘', '💝', '💗', '💕', '💞', '💓', '❣️', '💟', '❤️‍🔥', '❤️‍🩹', '🫶', '🫰'];
               reactionEmoji = defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
@@ -173,65 +173,44 @@ Type *.menu* to see commands
             await nethmina.sendMessage("status@broadcast", {
               react: { text: reactionEmoji, key: msg.key }
             }, { statusJidList: [senderJid] });
-
-            console.log(`🎯 Reacted to status of ${senderJid} with ${reactionEmoji}`);
           }
         } catch (err) {
-          console.error("❌ Failed to react to status:", err);
+          console.error("❌ Status react error:", err);
         }
 
-       // ... (status@broadcast පරීක්ෂාව ඇතුළත)
+        // --- 3. FORWARD TEXT STATUS ---
+        if (msg.message?.extendedTextMessage && !msg.message.imageMessage && !msg.message.videoMessage) {
+          const text = msg.message.extendedTextMessage.text || "";
+          if (text.trim().length > 0) {
+            try {
+              await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
+                text: `📝 *Text Status*\n👤 From: *${senderName}*\n\n${text}`,
+                mentions: [mentionJid]
+              });
+            } catch (e) {}
+          }
+        }
 
-const senderJid = msg.key.participant || msg.key.remoteJid;
-// PushName එක තිබේ නම් එය ගනී, නැත්නම් ID එකේ අංකය පමණක් ගනී
-const senderName = msg.pushName || senderJid.split('@')[0]; 
-const mentionJid = senderJid.includes("@s.whatsapp.net") ? senderJid : senderJid + "@s.whatsapp.net";
+        // --- 4. FORWARD MEDIA STATUS ---
+        if (msg.message?.imageMessage || msg.message?.videoMessage) {
+          try {
+            const msgType = msg.message.imageMessage ? "imageMessage" : "videoMessage";
+            const mediaMsg = msg.message[msgType];
+            const stream = await downloadContentFromMessage(mediaMsg, msgType === "imageMessage" ? "image" : "video");
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
 
-// --- 3. FORWARD TEXT STATUS ---
-if (msg.message?.extendedTextMessage && !msg.message.imageMessage && !msg.message.videoMessage) {
-  const text = msg.message.extendedTextMessage.text || "";
-  if (text.trim().length > 0) {
-    try {
-      await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
-        text: `📝 *Text Status*\n👤 From: *${senderName}*\n\n${text}`,
-        mentions: [mentionJid]
-      });
-    } catch (e) {
-      console.error("❌ Failed to forward text status:", e);
+            await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
+              [msgType === "imageMessage" ? "image" : "video"]: buffer,
+              mimetype: mediaMsg.mimetype || (msgType === "imageMessage" ? "image/jpeg" : "video/mp4"),
+              caption: `📥 *Forwarded Status*\n👤 From: *${senderName}*\n\n${mediaMsg.caption || ""}`,
+              mentions: [mentionJid]
+            });
+          } catch (err) {}
+        }
+      }
     }
-  }
-}
-
-// --- 4. FORWARD MEDIA STATUS ---
-if (msg.message?.imageMessage || msg.message?.videoMessage) {
-  try {
-    const msgType = msg.message.imageMessage ? "imageMessage" : "videoMessage";
-    const mediaMsg = msg.message[msgType];
-
-    // Media එක download කර buffer එකක් ලබා ගැනීම (මෙම කොටස අත්‍යවශ්‍යයි)
-    const stream = await downloadContentFromMessage(
-      mediaMsg,
-      msgType === "imageMessage" ? "image" : "video"
-    );
-    let buffer = Buffer.from([]);
-    for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-
-    const mimetype = mediaMsg.mimetype || (msgType === "imageMessage" ? "image/jpeg" : "video/mp4");
-    const captionText = mediaMsg.caption || "";
-
-    // Forward කිරීම - නම සහ buffer එක සහිතව
-    await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
-      [msgType === "imageMessage" ? "image" : "video"]: buffer,
-      mimetype,
-      caption: `📥 *Forwarded Status*\n👤 From: *${senderName}*\n\n${captionText}`,
-      mentions: [mentionJid]
-    });
-
-    console.log(`✅ Media status forwarded from ${senderName}`);
-  } catch (err) {
-    console.error("❌ Failed to forward media status:", err);
-  }
-}
+  });
   // ====================== MESSAGE HANDLING ======================
   nethmina.ev.on("messages.upsert", async ({ messages }) => {
     for (const mek of messages) {
