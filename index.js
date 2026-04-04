@@ -241,6 +241,50 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
         : mek.key.participant || mek.key.remoteJid;
 
       const senderNumber = sender.split("@")[0];
+
+      // ====================== VIEW ONCE AUTO RETRIEVE ======================
+      // View once message ekakata reply ekak awoth eka auto download karala ewanawa
+      if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+          const quoted = mek.message.extendedTextMessage.contextInfo.quotedMessage;
+          const mtype = Object.keys(quoted)[0]; // imageMessage, videoMessage etc.
+          
+          // Reply karapu message eka View Once ekakda kiyala check kireema
+          if (quoted[mtype]?.viewOnce) {
+              try {
+                  const mediaMsg = quoted[mtype];
+                  
+                  // Media eka download kireema
+                  const stream = await downloadContentFromMessage(
+                      mediaMsg,
+                      mtype === "imageMessage" ? "image" : mtype === "videoMessage" ? "video" : "audio"
+                  );
+                  
+                  let buffer = Buffer.from([]);
+                  for await (const chunk of stream) {
+                      buffer = Buffer.concat([buffer, chunk]);
+                  }
+
+                  // Inbox ekata media eka eweema
+                  let messageContent = {};
+                  if (mtype === "imageMessage") {
+                      messageContent = { image: buffer, caption: mediaMsg.caption || "", mimetype: mediaMsg.mimetype || "image/jpeg" };
+                  } else if (mtype === "videoMessage") {
+                      messageContent = { video: buffer, caption: mediaMsg.caption || "", mimetype: mediaMsg.mimetype || "video/mp4" };
+                  } else if (mtype === "audioMessage") {
+                      messageContent = { audio: buffer, mimetype: mediaMsg.mimetype || "audio/mp4", ptt: mediaMsg.ptt || false };
+                  }
+
+                  if (Object.keys(messageContent).length > 0) {
+                      await nethmina.sendMessage(from, messageContent, { quoted: mek });
+                      console.log("✅ View once auto-retrieved!");
+                  }
+              } catch (e) {
+                  console.log("❌ View Once Error:", e);
+              }
+          }
+      }
+
+      //===============================================================================================
       const isCmd = body.startsWith(prefix);
       const commandName = isCmd
         ? body.slice(prefix.length).trim().split(" ")[0]
