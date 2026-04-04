@@ -14,22 +14,22 @@ async (conn, mek, m, { from, q, reply, sender, isOwner, pushname }) => {
         await conn.sendMessage(from, { react: { text: '👤', key: mek.key } }).catch(() => null);
       
         let target;
-        let targetPushName = "Unknown";
+        let name;
 
-        // 1. Target User & PushName හඳුනා ගැනීම
+        // 1. Target & Name Detection Logic
         if (m.quoted) {
             target = m.quoted.sender;
-            // රිප්ලයි කළ මැසේජ් එකේ තියෙන pushname එක ගන්නවා
-            targetPushName = m.quoted.pushName || "User";
+            // රිප්ලයි එකේ pushName එක බැලීම (sms function එක අනුව වෙනස් විය හැක)
+            name = m.quoted.pushName || m.quoted.name || "User";
         } else if (q) {
             target = q.replace(/[^0-9]/g, '') + '@s.whatsapp.net';
-            targetPushName = "User"; // අංකයකින් ගද්දි pushname එක කලින්ම දන්නෙ නෑ
+            name = "User"; 
         } else {
             target = sender;
-            targetPushName = pushname; // තමන්ගෙම නම් කෙලින්ම pushname එක ගන්නවා
+            name = pushname; // තමන්ගේ නම
         }
 
-        // 2. Profile Picture ලබා ගැනීම
+        // 2. Profile Picture (PP) ලබා ගැනීම
         let ppUrl;
         try {
             ppUrl = await conn.profilePictureUrl(target, 'image');
@@ -37,27 +37,34 @@ async (conn, mek, m, { from, q, reply, sender, isOwner, pushname }) => {
             ppUrl = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
         }
 
-        // 3. Bio (Status) ලබා ගැනීමට උත්සාහ කිරීම
+        // 3. Bio/Status ලබා ගැනීමට උත්සාහ කිරීම
         let userBio = "Hidden by Privacy";
         try {
-            // fetchStatus එකට පොඩි වෙලාවක් දෙන්න ඕනෙ (Delay)
             const status = await conn.fetchStatus(target);
-            if (status && status.status) {
-                userBio = status.status;
-            }
+            if (status && status.status) userBio = status.status;
         } catch (e) {
             userBio = "Privacy Protected";
         }
 
-        // 4. අවසාන නම තීරණය කිරීම (PushName එක ප්‍රමුඛතාවය දෙයි)
-        let finalName = targetPushName || target.split('@')[0];
+        // 4. නම තවමත් "User" නම්, බොට්ගේ Contact List එකෙන් නම සෙවීම
+        if (name === "User" || !name) {
+            try {
+                const contact = await conn.getName(target);
+                name = contact || target.split('@')[0];
+            } catch {
+                name = target.split('@')[0];
+            }
+        }
+
+        // නම අංකයම නම්, අංකය පමණක් පෙන්වන්න (අනවශ්‍ය @s.whatsapp.net අයින් කර)
+        if (name.includes('@')) name = name.split('@')[0];
 
         const userNum = target.split('@')[0];
 
         let caption = `👤 *ＵＳＥＲ  ＰＲＯＦＩＬＥ  ＩＮＦＯ*
 
 ┌────────────────────⊷
-│ 📝 *Name:* ${finalName}
+│ 📝 *Name:* ${name}
 │ 🔢 *Number:* ${userNum}
 │ 💬 *Bio:* ${userBio}
 └────────────────────⊷
@@ -72,6 +79,6 @@ async (conn, mek, m, { from, q, reply, sender, isOwner, pushname }) => {
 
     } catch (e) {
         console.error("Profile Error:", e);
-        reply("❌ Error fetching profile. Make sure the number is correct.");
+        reply("❌ Error fetching profile info.");
     }
 });
