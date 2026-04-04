@@ -1,3 +1,6 @@
+const config = require('../config');
+const { cmd, commands } = require('../command');
+
 cmd({
     pattern: "settings",
     alias: ["set", "config"],
@@ -39,7 +42,7 @@ Hello *${pushname}*, here are the available commands to control the bot:
 
 > © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ`;
 
-        // Profile Picture එකක් තිබේ නම් එය සමඟ යැවීම (Optional)
+        // Profile Picture එකක් (Alive Image) සමඟ මැසේජ් එක යැවීම
         await conn.sendMessage(from, { 
             image: { url: config.ALIVE_IMG }, 
             caption: settingsText 
