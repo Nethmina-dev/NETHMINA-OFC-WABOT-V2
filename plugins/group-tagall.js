@@ -14,37 +14,41 @@ async (conn, mek, m, { from, q, sender, reply }) => {
         const isOwner = sender.includes(ownerNumber);
 
         let targetJid = from;
-        let message = q || "ＡＴＴＥＮＳＩＯＮ ＥＶＥＲＹＯＮＥ..!";
+        let message = "ＡＴＴＥＮＳＩＯＮ ＥＶＥＲＹＯＮＥ..!";
 
-        // 1. Inbox එකේ සිට Remote Tagging (Owner Only)
-        // භාවිතය: .tagall 120363xxx@g.us Hello Everyone
-        if (!from.endsWith('@g.us') && isOwner) {
+        // 1. Reaction එක ලබා දීම (🔊)
+        await conn.sendMessage(from, { react: { text: '🔊', key: mek.key } });
+
+        // 2. Inbox සිට Remote Tagging Check
+        if (!from.endsWith('@g.us') && isOwner && q) {
             const args = q.split(' ');
             if (args[0] && args[0].endsWith('@g.us')) {
                 targetJid = args[0];
                 message = args.slice(1).join(' ') || "ＡＴＴＥＮＳＩＯＮ ＥＶＥＲＹＯＮＥ..!";
             } else {
-                return reply("❌ Please provide a valid Group JID.\nExample: `.tagall 1203xxx@g.us Hello` වලට පස්සේ මැසේජ් එක දාන්න.");
+                return reply("❌ Please provide a valid Group JID.\nExample: `.tagall 1203xxx@g.us Hello`.");
             }
+        } else if (q) {
+            message = q;
         }
 
-        // 2. Group Check & Metadata Fetching
+        // 3. Group Validity Check
         if (!targetJid.endsWith('@g.us')) return reply("❌ This command must target a group.");
 
         const metadata = await conn.groupMetadata(targetJid).catch(() => null);
-        if (!metadata) return reply("❌ Failed to fetch group information. Make sure I am in that group.");
+        if (!metadata) return reply("❌ Failed to fetch group info. Make sure I am in that group.");
 
         const participants = metadata.participants;
         
-        // 3. Admin Check (ගෲප් එක ඇතුළේදී පමණක්)
+        // 4. Admin Check (ගෲප් එක ඇතුළේදී පමණක්)
         if (from.endsWith('@g.us')) {
             const userParticipant = participants.find(p => p.id === sender.split(":")[0] + "@s.whatsapp.net");
             const isUserActuallyAdmin = userParticipant && (userParticipant.admin === 'admin' || userParticipant.admin === 'superadmin');
             if (!isUserActuallyAdmin && !isOwner) return reply("❌ Only group admins can use this command.");
         }
 
-        // 4. Message සකස් කිරීම
-        let emojis = ['📢', '🔊', '🌐', '🔰', '❤‍🩹', '🤍', '🖤', '🩵', '📝', '💗', '🔖', '🪩', '📦', '🎉', '🛡️', '🚀', '🎧', '⚡', '🚩', '🔥'];
+        // 5. Message Content සකස් කිරීම
+        let emojis = ['📢', '🔊', '🌐', '🔰', '📝', '🚀', '🎧', '⚡', '🚩', '🔥', '🛡️', '📦'];
         let randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
         let teks = `▢ 𝙶𝚁𝙾𝚄𝙿 : *${metadata.subject}*\n▢ 𝙼𝙴𝙼𝙱𝙴𝚁𝚂 : *${participants.length}*\n▢ 𝙼𝙴𝚂𝚂𝙰𝙶𝙴: *${message}*\n\n┌───⊷ *ᴍᴇɴꜱɪᴏɴꜱ*\n`;
@@ -52,16 +56,15 @@ async (conn, mek, m, { from, q, sender, reply }) => {
         for (let mem of participants) {
             teks += `${randomEmoji} @${mem.id.split('@')[0]}\n`;
         }
+        teks += "└── ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ──";
 
-        teks += "└──✪ ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ✪──";
-
-        // 5. මැසේජ් එක යැවීම
+        // 6. මැසේජ් එක යැවීම
         await conn.sendMessage(targetJid, { 
             text: teks, 
             mentions: participants.map(a => a.id) 
-        }, { quoted: (from === targetJid ? mek : null) });
+        });
 
-        // 6. Inbox එකට Confirmation එකක් දීම
+        // 7. Inbox එකට විතරක් confirmation එකක් යැවීම
         if (from !== targetJid) {
             reply(`✅ Successfully tagged all members in *${metadata.subject}*`);
         }
