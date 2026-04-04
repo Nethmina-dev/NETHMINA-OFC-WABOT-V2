@@ -7,17 +7,20 @@ cmd({
     category: "group",
     filename: __filename
 },
-async (conn, mek, m, { from, isGroup, groupMetadata, reply }) => {
+async (conn, mek, m, { from, reply }) => {
     try {
-        // 1. ගෲප් එකක්ද කියා බැලීම
+        // 1. ගෲප් එකක්ද කියා JID එකෙන් පරීක්ෂා කිරීම
         const isGroupChat = from.endsWith('@g.us');
         if (!isGroupChat) return reply("❌ This command can only be used in groups.");
 
         // 2. Reaction: 👑
         await conn.sendMessage(from, { react: { text: "👑", key: mek.key } });
 
-        // 3. ඇඩ්මින්ලා වෙන් කර හඳුනා ගැනීම
+        // 3. ගෲප් එකේ දත්ත (Metadata) අලුතින්ම ලබා ගැනීම
+        const groupMetadata = await conn.groupMetadata(from);
         const participants = groupMetadata.participants;
+        
+        // ඇඩ්මින්ලා පමණක් වෙන් කර ගැනීම
         const groupAdmins = participants.filter(p => p.admin !== null);
         
         let adminText = `👑 *𝐆𝐑𝐎𝐔𝐏 𝐀𝐃𝐌𝐈𝐍 𝐋𝐈𝐒𝐓*\n\n`;
@@ -27,7 +30,6 @@ async (conn, mek, m, { from, isGroup, groupMetadata, reply }) => {
         const mentions = [];
 
         groupAdmins.forEach((admin, i) => {
-            const isAdmin = admin.admin === 'admin';
             const isSuperAdmin = admin.admin === 'superadmin'; // Group Creator
             
             const role = isSuperAdmin ? "👑 [Creator]" : "🛡️ [Admin]";
