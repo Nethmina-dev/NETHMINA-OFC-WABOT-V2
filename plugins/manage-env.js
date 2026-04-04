@@ -112,3 +112,63 @@ cmd({
     config.AUTO_TYPING = args[0] === "on" ? "true" : "false";
     reply(`✅ *AUTO_TYPING* set to ${args[0]}`);
 });
+
+// 8. MAIN AUTO REACT SWITCH (සම්පූර්ණ පද්ධතියම ON/OFF කිරීමට)
+cmd({
+    pattern: "auto-react",
+    desc: "Enable or disable the entire auto react system",
+    category: "settings",
+    filename: __filename
+}, async (conn, mek, m, { from, args, isOwner, reply }) => {
+    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
+    
+    if (args[0] === "on") {
+        config.AUTO_REACT = "true";
+        return reply("✅ *AUTO_REACT* system is now globally **ENABLED**.");
+    } else if (args[0] === "off") {
+        config.AUTO_REACT = "false";
+        return reply("❌ *AUTO_REACT* system is now globally **DISABLED**.");
+    } else {
+        return reply(`*Usage:* .auto-react on/off`);
+    }
+});
+
+// 9. OWNER REACT SWITCH (Owner ගේ මැසේජ් වලට පමණක්)
+cmd({
+    pattern: "owner-react",
+    desc: "Enable or disable reacts for owner messages",
+    category: "settings",
+    filename: __filename
+}, async (conn, mek, m, { from, args, isOwner, reply }) => {
+    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
+    
+    if (args[0] === "on") {
+        config.OWNER_REACT = "true";
+        return reply("✅ *OWNER_REACT* is now **ENABLED**.");
+    } else if (args[0] === "off") {
+        config.OWNER_REACT = "false";
+        return reply("❌ *OWNER_REACT* is now **DISABLED**.");
+    } else {
+        return reply(`*Usage:* .owner-react on/off`);
+    }
+});
+
+// 10. USER REACT SWITCH (අනිත් අයගේ මැසේජ් වලට පමණක්)
+cmd({
+    pattern: "user-react",
+    desc: "Enable or disable random reacts for user messages",
+    category: "settings",
+    filename: __filename
+}, async (conn, mek, m, { from, args, isOwner, reply }) => {
+    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
+    
+    if (args[0] === "on") {
+        config.USER_REACT = "true";
+        return reply("✅ *USER_REACT* (Random) is now **ENABLED**.");
+    } else if (args[0] === "off") {
+        config.USER_REACT = "false";
+        return reply("❌ *USER_REACT* (Random) is now **DISABLED**.");
+    } else {
+        return reply(`*Usage:* .user-react on/off`);
+    }
+});
