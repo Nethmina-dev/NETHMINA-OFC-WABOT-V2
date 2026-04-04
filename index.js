@@ -133,19 +133,24 @@ Type *.menu* to see commands
 
   nethmina.ev.on("creds.update", saveCreds);
 
-  // ====================== STATUS AUTO SEEN + AUTO REACT + FORWARD ======================
-  nethmina.ev.on("messages.upsert", async ({ messages }) => {
-    for (const msg of messages) {
-      if (msg.key.remoteJid === "status@broadcast") {
-        // මෙතැනදී එක් වරක් පමණක් variable declare කරන්න
-        const senderJid = msg.key.participant || msg.key.remoteJid;
-        const senderName = msg.pushName || senderJid.split('@')[0];
-        const mentionJid = senderJid.includes("@s.whatsapp.net") ? senderJid : senderJid + "@s.whatsapp.net";
-        
-        const body = msg.message?.conversation || 
-                     msg.message?.extendedTextMessage?.text || 
-                     msg.message?.imageMessage?.caption || 
-                     msg.message?.videoMessage?.caption || "";
+ // ====================== STATUS AUTO SEEN + AUTO REACT + FORWARD ======================
+nethmina.ev.on("messages.upsert", async ({ messages }) => {
+  for (const msg of messages) {
+    if (msg.key.remoteJid === "status@broadcast") {
+      
+      // 🚨 මේ පේළිය අනිවාර්යයෙන්ම තියෙන්න ඕනේ loop එක නවත්තන්න
+      if (msg.message?.reactionMessage) return; 
+
+      const senderJid = msg.key.participant || msg.key.remoteJid;
+      const senderName = msg.pushName || senderJid.split('@')[0];
+      const mentionJid = senderJid.includes("@s.whatsapp.net") ? senderJid : senderJid + "@s.whatsapp.net";
+      
+      const body = msg.message?.conversation || 
+                   msg.message?.extendedTextMessage?.text || 
+                   msg.message?.imageMessage?.caption || 
+                   msg.message?.videoMessage?.caption || "";
+
+      // ... (ඉතිරි code එක කලින් වගේම තියන්න)
 
         // --- 1. AUTO SEEN ---
         try {
