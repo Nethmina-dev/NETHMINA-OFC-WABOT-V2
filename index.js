@@ -293,26 +293,7 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
           }
       }
 
-      //===============================================================================================
-      const isCmd = body.startsWith(prefix);
-      const commandName = isCmd
-        ? body.slice(prefix.length).trim().split(" ")[0]
-        : "";
-
-      const args = body.trim().split(/ +/).slice(1);
-      const q = args.join(" ");
-
-      const reply = (txt) =>
-        nethmina.sendMessage(from, { text: txt }, { quoted: mek });
-
-      // Auto-react for owner
-      if (ownerNumber.includes(senderNumber)) {
-        await nethmina.sendMessage(from, {
-          react: { text: "🧑🏻‍💻", key: mek.key }
-        });
-      }
-
-      // COMMAND HANDLER
+      // ====================== COMMAND HANDLER ======================
       if (isCmd) {
         const cmd = commands.find(
           (c) =>
@@ -322,13 +303,26 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
 
         if (cmd) {
           try {
+            // Quoted message එක ගොඩනැගීම (ප්ලගින් එක ඇතුළේ කෙලින්ම පාවිච්චි කිරීමට)
+            const quoted = mek.message[type]?.contextInfo?.quotedMessage ? {
+                id: mek.message[type].contextInfo.stanzaId,
+                sender: mek.message[type].contextInfo.participant,
+                fromMe: mek.message[type].contextInfo.participant === (nethmina.user.id.split(':')[0] + '@s.whatsapp.net'),
+                message: mek.message[type].contextInfo.quotedMessage
+            } : null;
+
             await cmd.function(nethmina, mek, sms(nethmina, mek), {
               from,
               args,
               q,
               sender,
               reply,
-              command: commandName
+              command: commandName,
+              isGroup,
+              isOwner,
+              isAdmins,
+              isBotAdmins,
+              quoted // නිවැරදි quoted object එක
             });
           } catch (e) {
             console.log("PLUGIN ERROR:", e);
@@ -336,23 +330,24 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
         }
       }
 
-      
-
-      // REPLY HANDLERS
+      // ====================== REPLY HANDLERS ======================
       for (const handler of replyHandlers) {
         if (handler.filter(body, { sender, message: mek })) {
           handler.function(nethmina, mek, sms(nethmina, mek), {
             from,
             body,
             sender,
-            reply
+            reply,
+            isGroup,
+            isOwner,
+            isAdmins,
+            isBotAdmins
           });
           break;
         }
       }
     }
   });
-
   // ====================== MESSAGE DELETE EVENT ======================
   nethmina.ev.on("messages.update", async (updates) => {
     for (const plugin of global.pluginHooks) {
