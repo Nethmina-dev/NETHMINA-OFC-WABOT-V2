@@ -242,18 +242,17 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
 
       const senderNumber = sender.split("@")[0];
 
-      // ====================== VIEW ONCE AUTO RETRIEVE ======================
-      // View once message ekakata reply ekak awoth eka auto download karala ewanawa
+     // ====================== VIEW ONCE AUTO RETRIEVE (OWNER ONLY & REDIRECT) ======================
       if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
           const quoted = mek.message.extendedTextMessage.contextInfo.quotedMessage;
-          const mtype = Object.keys(quoted)[0]; // imageMessage, videoMessage etc.
+          const mtype = Object.keys(quoted)[0];
           
-          // Reply karapu message eka View Once ekakda kiyala check kireema
-          if (quoted[mtype]?.viewOnce) {
+          // 1. View Once ද සහ එවූ පුද්ගලයා Owner ද කියා පරීක්ෂා කිරීම
+          if (quoted[mtype]?.viewOnce && ownerNumber.includes(senderNumber)) {
               try {
                   const mediaMsg = quoted[mtype];
                   
-                  // Media eka download kireema
+                  // Media එක download කිරීම
                   const stream = await downloadContentFromMessage(
                       mediaMsg,
                       mtype === "imageMessage" ? "image" : mtype === "videoMessage" ? "video" : "audio"
@@ -264,19 +263,21 @@ nethmina.ev.on("messages.upsert", async ({ messages }) => {
                       buffer = Buffer.concat([buffer, chunk]);
                   }
 
-                  // Inbox ekata media eka eweema
                   let messageContent = {};
+                  const captionText = `📥 *View Once Retrieved*\n👤 From Chat: ${from}\n📝 Caption: ${mediaMsg.caption || "No caption"}`;
+
                   if (mtype === "imageMessage") {
-                      messageContent = { image: buffer, caption: mediaMsg.caption || "", mimetype: mediaMsg.mimetype || "image/jpeg" };
+                      messageContent = { image: buffer, caption: captionText, mimetype: mediaMsg.mimetype || "image/jpeg" };
                   } else if (mtype === "videoMessage") {
-                      messageContent = { video: buffer, caption: mediaMsg.caption || "", mimetype: mediaMsg.mimetype || "video/mp4" };
+                      messageContent = { video: buffer, caption: captionText, mimetype: mediaMsg.mimetype || "video/mp4" };
                   } else if (mtype === "audioMessage") {
                       messageContent = { audio: buffer, mimetype: mediaMsg.mimetype || "audio/mp4", ptt: mediaMsg.ptt || false };
                   }
 
+                  // 2. මැසේජ් එක එම චැට් එකට යවන්නේ නැතිව කෙලින්ම Owner ගේ Inbox එකට යැවීම
                   if (Object.keys(messageContent).length > 0) {
-                      await nethmina.sendMessage(from, messageContent, { quoted: mek });
-                      console.log("✅ View once auto-retrieved!");
+                      await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", messageContent);
+                      console.log("✅ View once sent to Owner's Inbox!");
                   }
               } catch (e) {
                   console.log("❌ View Once Error:", e);
