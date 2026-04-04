@@ -6,13 +6,13 @@ const fs = require("fs")
 cmd({
     pattern: "alive",
     react: "🎃",
-    desc: "Check bot online or no.",
+    desc: "Check bot online status with Ad Card and 1,2 Reply Support.",
     category: "main",
     filename: __filename
 },
-async (nethmina, mek, m, { from, quoted, reply }) => {
+async (nethmina, mek, m, { from, reply }) => {
     try {
-        // 1. Send Audio (Original logic without FFmpeg dependency issues)
+        // 1. Voice Note එක යැවීම
         const audioUrl = 'https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3';
         await nethmina.sendMessage(from, {
             audio: { url: audioUrl },
@@ -20,25 +20,35 @@ async (nethmina, mek, m, { from, quoted, reply }) => {
             ptt: true
         }, { quoted: mek });
 
-        // 2. Prepare Buttons
-        const buttons = [
-            { buttonId: '.ping', buttonText: { displayText: '⚡ CHECK PING' }, type: 1 },
-            { buttonId: '.menu', buttonText: { displayText: '📜 GET MENU' }, type: 1 }
-        ]
+        // 2. Caption එක (මෙතන "ALIVE NOW" කියන වචනය අනිවාර්යයෙන්ම තියෙන්න ඕනේ index.js එකට අඳුරගන්න)
+        const aliveMsg = `👋 *HELLO, I AM ALIVE NOW!*
 
-        // 3. Button Message Structure
-        const buttonMessage = {
+${config.ALIVE_MSG || "I am NETHMINA-OFC WhatsApp Bot."}
+
+*Reply with a number to navigate:*
+1️⃣ *Check Ping ⚡*
+2️⃣ *Get Menu 📜*
+
+> Powered by Nethmina-dev`;
+
+        // 3. Ad Card එක සමඟ මැසේජ් එක යැවීම
+        await nethmina.sendMessage(from, {
             image: { url: config.ALIVE_IMG },
-            caption: config.ALIVE_MSG || "I am Alive Now! 🤖",
-            footer: "> Powered by NETHMINA-OFC",
-            buttons: buttons,
-            headerType: 4
-        }
+            caption: aliveMsg,
+            contextInfo: {
+                externalAdReply: {
+                    title: "🤖 NETHMINA-OFC WA-BOT ONLINE",
+                    body: "Status: Active & Running 🚀",
+                    mediaType: 1,
+                    sourceUrl: "https://github.com/Nethmina-dev",
+                    thumbnailUrl: config.ALIVE_IMG,
+                    renderLargerThumbnail: true,
+                    showAdAttribution: true
+                }
+            }
+        }, { quoted: mek });
 
-        // 4. Send Message
-        await nethmina.sendMessage(from, buttonMessage, { quoted: mek });
-
-        // 5. Send Video Note (Optional - as in your original code)
+        // 4. Video Note එක (Optional)
         await nethmina.sendMessage(from, {
             video: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Video-notes/PTV-20250623-WA0021.mp4" },
             mimetype: 'video/mp4',
