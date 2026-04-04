@@ -3,43 +3,39 @@ const { cmd } = require('../command');
 cmd({
     pattern: "delete",
     alias: ["del"],
-    desc: "Delete for everyone and auto-remove command.",
+    desc: "Delete a replied message.",
     category: "group",
-    use: '.del (reply to a message)',
     filename: __filename
 },
 async (conn, mek, m, { from, quoted, isOwner, isAdmins, isBotAdmins, reply }) => {
     try {
-        // 1. Permissions Check (අයිතිකරු හෝ ඇඩ්මින් ද කියා බැලීම)
-        if (!isOwner && !isAdmins) return; 
+        // 1. Permission Check (Owner හෝ Admin විය යුතුය)
+        if (!isOwner && !isAdmins) return; // සද්ද නැතුව ඉන්නවා (නැත්නම් reply එකක් දාන්න)
 
-        // 2. Quoted Check (මැසේජ් එකකට රිප්ලයි කර ඇත්දැයි බැලීම)
+        // 2. රිප්ලයි එකක් තියෙනවාද බලන්න
         if (!quoted) return reply("❌ Please reply to the message you want to delete.");
 
-        // 3. Bot Admin Check (වෙනත් අයගේ මැසේජ් මැකීමට බොට් ඇඩ්මින් විය යුතුය)
+        // 3. Bot Admin ද බලන්න (වෙනත් අයගේ මැසේජ් මැකීමට නම්)
+        // Bot ගේම මැසේජ් එකක් නම් Admin ඕනේ නැහැ.
         if (!quoted.fromMe && !isBotAdmins) {
-            return reply("❌ I need to be an *Admin* to delete messages for everyone.");
+            return reply("❌ I need to be an *Admin* to delete messages from other members.");
         }
 
-        // 4. Reaction එක ලබා දීම (මැකීමට පෙර)
-        await conn.sendMessage(from, { react: { text: '🗑', key: mek.key } }).catch(() => null);
+        // 4. මැසේජ් එක මැකීම
+        await conn.sendMessage(from, { 
+            delete: { 
+                remoteJid: from, 
+                fromMe: quoted.fromMe, 
+                id: quoted.id, 
+                participant: quoted.sender 
+            } 
+        });
 
-        // 5. Target Message එක Delete කිරීම (Delete for Everyone)
-        const targetKey = {
-            remoteJid: from,
-            fromMe: quoted.fromMe,
-            id: quoted.id,
-            participant: quoted.sender
-        };
-        await conn.sendMessage(from, { delete: targetKey });
-
-        // 6. ඔයාගේ .del කමාන්ඩ් එකත් මැකීම (Auto-Cleanup)
-        // තත්පර 1ක පොඩි වෙලාවක් ලබා දෙනවා reaction එක පෙනෙන්නට
-        setTimeout(async () => {
-            await conn.sendMessage(from, { delete: mek.key });
-        }, 1000);
+        // 5. ඔයා දාපු කමාන්ඩ් එකත් මැකීම (Optional)
+        await conn.sendMessage(from, { delete: mek.key });
 
     } catch (e) {
-        console.error("Delete Error:", e);
+        console.log("Delete Error:", e);
+        reply("❌ Error: Could not delete the message.");
     }
 });
