@@ -17,7 +17,10 @@ AUTO_TYPING: process.env.AUTO_TYPING || "false",
 AUTO_REACT: process.env.AUTO_REACT || "true", // Main Switch
 OWNER_REACT: process.env.OWNER_REACT || "true", // Owner React Switch
 USER_REACT: process.env.USER_REACT || "false", // User React Switch
-OWNER_REACT_EMOJI: process.env.OWNER_REACT_EMOJI || "🧑🏻‍💻" // Owner's Static Emoji
+OWNER_REACT_EMOJI: process.env.OWNER_REACT_EMOJI || "🧑🏻‍💻",
+AUTO_STICKER: process.env.AUTO_STICKER || "true",
+AUTO_VOICE: process.env.AUTO_VOICE || "true",
+AUTO_REPLY: process.env.AUTO_REPLY || "true"// Owner's Static Emoji
     
 
 
