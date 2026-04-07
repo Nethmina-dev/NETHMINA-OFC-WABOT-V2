@@ -137,78 +137,77 @@ Type *.menu* to see commands
   nethmina.ev.on("messages.upsert", async ({ messages }) => {
     for (const msg of messages) {
       if (msg.key.remoteJid === "status@broadcast") {
-        
-        if (msg.message?.reactionMessage) return; 
-
         const senderJid = msg.key.participant || msg.key.remoteJid;
-        const senderName = msg.pushName || senderJid.split('@')[0];
-        const mentionJid = senderJid.includes("@s.whatsapp.net") ? senderJid : senderJid + "@s.whatsapp.net";
-        
-        const body = msg.message?.conversation || 
-                     msg.message?.extendedTextMessage?.text || 
-                     msg.message?.imageMessage?.caption || 
-                     msg.message?.videoMessage?.caption || "";
+        const mentionJid = senderJid.includes("@s.whatsapp.net")
+          ? senderJid
+          : senderJid + "@s.whatsapp.net";
 
-        // --- 1. AUTO SEEN ---
+        // AUTO SEEN
         try {
-          if (config.AUTO_STATUS_SEEN === "true") {
-            await nethmina.readMessages([msg.key]);
-          }
+          await nethmina.readMessages([msg.key]);
+          console.log(`👀 Status seen: ${msg.key.id}`);
         } catch (err) {
-          console.error("❌ Status seen error:", err);
+          console.error("❌ Failed to mark status as seen:", err);
         }
 
-        // --- 2. SMART AUTO REACT ---
+        // AUTO REACT
         try {
-          if (config.AUTO_STATUS_REACT === "true") {
-            const emojiRegex = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/g;
-            const foundEmojis = body ? body.match(emojiRegex) : null;
-            
-            let reactionEmoji;
-            if (foundEmojis && foundEmojis.length > 0) {
-              reactionEmoji = foundEmojis[0];
-            } else {
-              const defaultEmojis = ['❤️', '🩷', '🩵', '🩶', '💜', '💙', '💚', '💛', '🧡', '🤍', '🤎', '🖤','💖', '💘', '💝', '💗', '💕', '💞', '💓', '❣️', '💟', '❤️‍🔥', '❤️‍🩹', '🫶', '🫰'];
-              reactionEmoji = defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
-            }
+          const emojis = ['❤️', '🩷', '🩵', '🩶', '💜', '💙', '💚', '💛', '🧡', '🤍', '🤎', '🖤','💖', '💘', '💝', '💗', '💕', '💞', '💓', '❣️', '💟', '❤️‍🔥', '❤️‍🩹', '🫶', '🫰'];
+          const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
-            await nethmina.sendMessage("status@broadcast", {
-              react: { text: reactionEmoji, key: msg.key }
-            }, { statusJidList: [senderJid] });
-          }
+          await nethmina.sendMessage(senderJid, {
+            react: { text: randomEmoji, key: msg.key }
+          });
+
+          console.log(`🎯 Reacted to status of ${senderJid} with ${randomEmoji}`);
         } catch (err) {
-          console.error("❌ Status react error:", err);
+          console.error("❌ Failed to react to status:", err);
         }
 
-        // --- 3. FORWARD TEXT STATUS ---
+        // FORWARD TEXT STATUS
         if (msg.message?.extendedTextMessage && !msg.message.imageMessage && !msg.message.videoMessage) {
           const text = msg.message.extendedTextMessage.text || "";
           if (text.trim().length > 0) {
             try {
               await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
-                text: `📝 *Text Status*\n👤 From: *${senderName}*\n\n${text}`,
+                text: `📝 *Text Status*\n👤 From: @${mentionJid.split("@")[0]}\n\n${text}`,
                 mentions: [mentionJid]
               });
-            } catch (e) {}
+              console.log(`✅ Text status forwarded from ${mentionJid}`);
+            } catch (e) {
+              console.error("❌ Failed to forward text status:", e);
+            }
           }
         }
 
-        // --- 4. FORWARD MEDIA STATUS ---
+        // FORWARD MEDIA STATUS
         if (msg.message?.imageMessage || msg.message?.videoMessage) {
           try {
             const msgType = msg.message.imageMessage ? "imageMessage" : "videoMessage";
             const mediaMsg = msg.message[msgType];
-            const stream = await downloadContentFromMessage(mediaMsg, msgType === "imageMessage" ? "image" : "video");
+
+            const stream = await downloadContentFromMessage(
+              mediaMsg,
+              msgType === "imageMessage" ? "image" : "video"
+            );
+
             let buffer = Buffer.from([]);
             for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
 
+            const mimetype = mediaMsg.mimetype || (msgType === "imageMessage" ? "image/jpeg" : "video/mp4");
+            const captionText = mediaMsg.caption || "";
+
             await nethmina.sendMessage(ownerNumber[0] + "@s.whatsapp.net", {
               [msgType === "imageMessage" ? "image" : "video"]: buffer,
-              mimetype: mediaMsg.mimetype || (msgType === "imageMessage" ? "image/jpeg" : "video/mp4"),
-              caption: `📥 *Forwarded Status*\n👤 From: *${senderName}*\n\n${mediaMsg.caption || ""}`,
+              mimetype,
+              caption: `📥 *Forwarded Status*\n👤 From: @${mentionJid.split("@")[0]}\n\n${captionText}`,
               mentions: [mentionJid]
             });
-          } catch (err) {}
+
+            console.log(`✅ Media status forwarded from ${mentionJid}`);
+          } catch (err) {
+            console.error("❌ Failed to forward media status:", err);
+          }
         }
       }
     }
@@ -230,106 +229,34 @@ Type *.menu* to see commands
       const body =
         type === "conversation"
           ? mek.message.conversation
-          : type === "extendedTextMessage"
-          ? mek.message.extendedTextMessage.text
-          : type === "imageMessage"
-          ? mek.message.imageMessage.caption
-          : type === "videoMessage"
-          ? mek.message.videoMessage.caption
-          : "";
+          : mek.message[type]?.text ||
+            mek.message[type]?.caption ||
+            "";
 
       const sender = mek.key.fromMe
         ? nethmina.user.id
         : mek.key.participant || mek.key.remoteJid;
 
       const senderNumber = sender.split("@")[0];
-
-      // ====================== VIEW ONCE AUTO RETRIEVE ======================
-      if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
-          const quoted = mek.message.extendedTextMessage.contextInfo.quotedMessage;
-          const mtype = Object.keys(quoted)[0];
-          if (quoted[mtype]?.viewOnce) {
-              const isMyMessage = sender.includes("94760860835");
-              if (isMyMessage) {
-                  try {
-                      const mediaMsg = quoted[mtype];
-                      const stream = await downloadContentFromMessage(
-                          mediaMsg,
-                          mtype === "imageMessage" ? "image" : mtype === "videoMessage" ? "video" : "audio"
-                      );
-                      let buffer = Buffer.from([]);
-                      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-
-                      const targetJid = "94760860835@s.whatsapp.net";
-                      const captionText = `📥 *View Once Retrieved*\n👤 From Chat: ${from}\n📝 Caption: ${mediaMsg.caption || "No caption"}`;
-
-                      let messageContent = {};
-                      if (mtype === "imageMessage") {
-                          messageContent = { image: buffer, caption: captionText, mimetype: mediaMsg.mimetype || "image/jpeg" };
-                      } else if (mtype === "videoMessage") {
-                          messageContent = { video: buffer, caption: captionText, mimetype: mediaMsg.mimetype || "video/mp4" };
-                      } else if (mtype === "audioMessage") {
-                          messageContent = { audio: buffer, mimetype: mediaMsg.mimetype || "audio/mp4", ptt: mediaMsg.ptt || false };
-                      }
-
-                      if (Object.keys(messageContent).length > 0) {
-                          await nethmina.sendMessage(targetJid, messageContent);
-                      }
-                  } catch (e) {
-                      console.log("❌ View Once Process Error:", e);
-                  }
-              }
-          }
-      }
-
-      // ====================== COMMAND PARSING ======================
       const isCmd = body.startsWith(prefix);
-      const commandName = isCmd ? body.slice(prefix.length).trim().split(" ")[0].toLowerCase() : "";
+      const commandName = isCmd
+        ? body.slice(prefix.length).trim().split(" ")[0]
+        : "";
+
       const args = body.trim().split(/ +/).slice(1);
       const q = args.join(" ");
 
       const reply = (txt) =>
         nethmina.sendMessage(from, { text: txt }, { quoted: mek });
 
-      // ====================== GLOBAL PERMISSIONS (UPDATED) ======================
-      const isGroup = from.endsWith('@g.us');
-      const isMe = mek.key.fromMe;
-      
-      // Bot ගේ අංකය ලබා ගැනීම
-      const botNumber = nethmina.user.id.split(':')[0] + '@s.whatsapp.net';
-      const isBot = sender === botNumber; // මැසේජ් එක එවන්නේ බොට්මද?
-
-      const isOwner = ownerNumber.includes(senderNumber) || isMe;
-
-      let isAdmins = false;
-      let isBotAdmins = false;
-
-      if (isGroup) {
-          try {
-              const groupMetadata = await nethmina.groupMetadata(from);
-              const participants = groupMetadata.participants;
-              
-              // යවන්නා Admin ද?
-              const user = participants.find(p => p.id === sender);
-              isAdmins = user && (user.admin === 'admin' || user.admin === 'superadmin');
-              
-              // බොට් Admin ද?
-              const botInGroup = participants.find(p => p.id === botNumber);
-              isBotAdmins = botInGroup && (botInGroup.admin === 'admin' || botInGroup.admin === 'superadmin');
-          } catch (e) {
-              isAdmins = false;
-              isBotAdmins = false;
-          }
-      }
-      
       // Auto-react for owner
-      if (isOwner && isCmd) {
+      if (ownerNumber.includes(senderNumber)) {
         await nethmina.sendMessage(from, {
           react: { text: "🧑🏻‍💻", key: mek.key }
         });
       }
 
-      // ====================== COMMAND HANDLER ======================
+      // COMMAND HANDLER
       if (isCmd) {
         const cmd = commands.find(
           (c) =>
@@ -339,25 +266,13 @@ Type *.menu* to see commands
 
         if (cmd) {
           try {
-            const quoted = mek.message[type]?.contextInfo?.quotedMessage ? {
-                id: mek.message[type].contextInfo.stanzaId,
-                sender: mek.message[type].contextInfo.participant,
-                fromMe: mek.message[type].contextInfo.participant === (nethmina.user.id.split(':')[0] + '@s.whatsapp.net'),
-                message: mek.message[type].contextInfo.quotedMessage
-            } : null;
-
             await cmd.function(nethmina, mek, sms(nethmina, mek), {
               from,
               args,
               q,
               sender,
               reply,
-              command: commandName,
-              isGroup,
-              isOwner,
-              isAdmins,
-              isBotAdmins,
-              quoted
+              command: commandName
             });
           } catch (e) {
             console.log("PLUGIN ERROR:", e);
@@ -365,18 +280,14 @@ Type *.menu* to see commands
         }
       }
 
-      // ====================== REPLY HANDLERS ======================
+      // REPLY HANDLERS
       for (const handler of replyHandlers) {
         if (handler.filter(body, { sender, message: mek })) {
           handler.function(nethmina, mek, sms(nethmina, mek), {
             from,
             body,
             sender,
-            reply,
-            isGroup,
-            isOwner,
-            isAdmins,
-            isBotAdmins
+            reply
           });
           break;
         }
