@@ -48,7 +48,7 @@ cmd(
         {
           audio: Buffer.from(response.data),
           mimetype: "audio/mpeg",
-          ptt: true,
+          ptt: false,
         },
         { quoted: mek }
       );
