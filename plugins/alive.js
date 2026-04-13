@@ -52,10 +52,9 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
 
 *> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||*`;
 
-        // 5. Final Message with Newsletter Forwarding + Verified Contact Quoted Logic
-        return await nethmina.sendMessage(from, { 
-            image: { url: config.ALIVE_IMG },
-            caption: mainCaption,
+        // 5. Final Message with Clickable Link Logic
+        return await conn.sendMessage(from, { 
+            text: mainCaption, // image: වෙනුවට text: පාවිච්චි කිරීමෙන් preview එක වඩාත් පැහැදිලි වෙනවා
             contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,
@@ -68,9 +67,9 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
                     title: `NETHMINA-OFC WA-BOT IS ONLINE 🎀`,
                     body: `NETHMINA-OFC-WA-BOT V2 🍒`,
                     mediaType: 1,
-                    sourceUrl: "https://github.com/nethmina-ofc",
+                    sourceUrl: "https://github.com/nethmina-ofc", // මෙය ක්ලික් කළ විට විවෘත වන ලින්ක් එක
                     thumbnailUrl: config.ALIVE_IMG,
-                    renderLargerThumbnail: false,
+                    renderLargerThumbnail: true, 
                     showAdAttribution: true
                 }
             }
@@ -79,12 +78,11 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
                 key: { 
                     remoteJid: 'status@broadcast', 
                     fromMe: false, 
-                    // මේ Participant ID එක දැම්මම තමයි Verified Blue Tick එක වැටෙන්නේ
                     participant: '0@s.whatsapp.net' 
                 },
                 message: {
                     contactMessage: {
-                        displayName: "SANDES-AI ツ", // මෙතනට ඔයාට ඕන නම දෙන්න
+                        displayName: "SANDES-AI ツ",
                         vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;SANDES-AI ツ;;;\nFN:SANDES-AI ツ\nitem1.TEL;waid=94760860835:+94 76 086 0835\nitem1.X-ABLabel:PSTN\nEND:VCARD`
                     }
                 }
