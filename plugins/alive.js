@@ -53,7 +53,7 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
 *> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||*`;
 
         // 5. Final Message with Clickable Link Logic
-        return await conn.sendMessage(from, { 
+        return await nethmina.sendMessage(from, { 
             text: mainCaption, // image: වෙනුවට text: පාවිච්චි කිරීමෙන් preview එක වඩාත් පැහැදිලි වෙනවා
             contextInfo: {
                 forwardingScore: 999,
