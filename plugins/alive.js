@@ -3,7 +3,7 @@ const { cmd } = require('../command');
 const { runtime } = require('../lib/functions');
 const fs = require('fs');
 const path = require('path');
-
+const os = require('os');
 
 cmd({
     pattern: "alive",
@@ -13,77 +13,79 @@ cmd({
 },
 async (nethmina, mek, m, { from, pushname, reply }) => {
     try {
-        // 1. Reaction
+        
         await nethmina.sendMessage(from, { react: { text: "🎃", key: m.key } });
 
         const uptime = runtime(process.uptime());
         const date = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo' });
         const time = new Date().toLocaleTimeString('en-US', { hour12: true, timeZone: 'Asia/Colombo' });
 
+       
         await nethmina.sendPresenceUpdate('recording', from);
-        await nethmina.sendMessage(from, { audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3" }, mimetype: 'audio/mpeg', ptt: false }, { quoted: mek });
-        // 3. Video Note (PTV)
+        await nethmina.sendMessage(from, { 
+            audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3" }, 
+            mimetype: 'audio/mpeg', 
+            ptt: false 
+        }, { quoted: mek });
+
+        
         await nethmina.sendMessage(from, {
             video: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Video-notes/PTV-20250623-WA0021.mp4" },
             mimetype: 'video/mp4',
             ptv: true
         }, { quoted: mek });
 
-        // 4. Alive Message Caption
-        let mainCaption = `👋 *HELLOW*, *${pushname || 'User'}*
+        // 4. Alive Message Caption (Monospace Fixed)
+        let mainCaption = `👋  𝐇𝐄𝐋𝐋𝐎, ${pushname || 'User'} 𝐈❜𝐀𝐌 𝐀𝐋𝐈𝐕𝐄 𝐍𝐎𝐖 👾
 
-*╭─「 ᴅᴀᴛᴇ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ 」──●●►*
-*│*📅 Date : ${date}
-*│*🕒 Time : ${time}
-*╰──────────●●►*
+╭─「 ᴅᴀᴛᴇ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ 」
+│📅 \`Date\` : ${date}
+│⏰ \`Time\` : ${time}
+╰──────────●●►
 
-*╭─「 ꜱᴛᴀᴛᴜꜱ ᴅᴇᴛᴀɪʟꜱ 」──●●►*
-*│*👤 User : ${pushname || 'User'}
-*│*🧑‍💻 Owner : ${config.OWNER_NAME}
-*│*✒️ Prefix : ${config.PREFIX}
-*│*🧬 Version : V 02
-*│*📟 Uptime : ${uptime}
-*╰──────────●●►*
+╭─「 ꜱᴛᴀᴛᴜꜱ ᴅᴇᴛᴀɪʟꜱ 」
+│👤 User: ${pushname || 'User'}
+│✒️ \`Prefix\` : ${config.PREFIX}
+│🧬 \`Version\` : v2.0.0
+│🎈 \`Platform\` : Linux
+│📡 \`Host\` : ${os.hostname()}
+│📟 \`Uptime\` : ${uptime}
+│📂 \`Memory\` : ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(os.totalmem() / 1024 / 1024)}MB
+╰──────────●●►
 
-🔢 *REPLY THE NUMBER BELLOW*
-
-01 ❯❯◦ COMMANDS MENU
-02 ❯❯◦ CHECK BOT PING
+╭─「 ᴍᴀɪɴ ᴄᴏᴍᴍᴀɴᴅꜱ 」
+│ 💡 Some commands you can use:  
+│ 🔸 \`.menu\`
+│ 🔸 \`.alive\`
+│ 🔸 \`.system\`
+╰──────────●●►
 
 > © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||`;
 
-        // 5. Final Message - Black Image Fix
+       
         return await nethmina.sendMessage(from, { 
-            text: mainCaption, // මෙතන text: දැමීමෙන් black image error එක නැති වෙනවා
+            image: { url: config.ALIVE_IMG },
+            caption: mainCaption,
             contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: '120363233544482017@newsletter',
-                    newsletterName: 'NETHMINA-OFC-WA-BOT',
                     serverMessageId: 143
-                },
-                externalAdReply: {
-                    title: `NETHMINA-OFC WA-BOT IS ONLINE 🎀`,
-                    body: `NETHMINA-OFC-WA-BOT V2 🍒`,
-                    mediaType: 1,
-                    sourceUrl: "https://github.com/nethmina-ofc", 
-                    thumbnailUrl: config.ALIVE_IMG, // මෙතන ලින්ක් එක නිවැරදිද බලන්න
-                    renderLargerThumbnail: true, 
-                    showAdAttribution: true
                 }
+                
             }
         }, { 
             quoted: {
                 key: { 
                     remoteJid: 'status@broadcast', 
                     fromMe: false, 
-                    participant: '16505361212@s.whatsapp.net' 
+                    participant: '0@s.whatsapp.net' 
                 },
                 message: {
                     contactMessage: {
-                        displayName: "SANDES-AI ツ",
-                        vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;SANDES-AI ツ;;;\nFN:SANDES-AI ツ\nitem1.TEL;waid=94760860835:+94 76 086 0835\nitem1.X-ABLabel:PSTN\nEND:VCARD`
+                        displayName: "NETHMINA-OFC ツ",
+                        vcard: `BEGIN:VCARD\nVERSION:3.0\nN:;NETHMINA-OFC ツ;;;\nFN:NETHMINA-OFC ツ\nitem1.TEL;waid=94760860835:+94 76 086 0835\nitem1.X-ABLabel:PSTN\nEND:VCARD`
                     }
                 }
             }
