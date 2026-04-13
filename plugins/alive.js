@@ -11,10 +11,10 @@ cmd({
     category: "main",
     filename: __filename
 },
-async (conn, mek, m, { from, pushname, reply }) => {
+async (nethmina, mek, m, { from, pushname, reply }) => {
     try {
         // 1. Reaction
-        await conn.sendMessage(from, { react: { text: "🎃", key: m.key } });
+        await nethmina.sendMessage(from, { react: { text: "🎃", key: m.key } });
 
         const uptime = runtime(process.uptime());
         const date = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo' });
@@ -23,7 +23,7 @@ async (conn, mek, m, { from, pushname, reply }) => {
         await nethmina.sendPresenceUpdate('recording', from);
         await nethmina.sendMessage(from, { audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp33" }, mimetype: 'audio/mpeg', ptt: false }, { quoted: mek });
         // 3. Video Note (PTV)
-        await conn.sendMessage(from, {
+        await nethmina.sendMessage(from, {
             video: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Video-notes/PTV-20250623-WA0021.mp4" },
             mimetype: 'video/mp4',
             ptv: true
@@ -53,7 +53,7 @@ async (conn, mek, m, { from, pushname, reply }) => {
 *> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||*`;
 
         // 5. Final Message with Newsletter Forwarding + Contact Quoted Logic
-        return await conn.sendMessage(from, { 
+        return await nethmina.sendMessage(from, { 
             image: { url: config.ALIVE_IMG },
             caption: mainCaption,
             contextInfo: {
