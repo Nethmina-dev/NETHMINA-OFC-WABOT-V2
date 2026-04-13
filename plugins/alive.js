@@ -50,11 +50,11 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
 01 ❯❯◦ COMMANDS MENU
 02 ❯❯◦ CHECK BOT PING
 
-*> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||*`;
+> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||`;
 
-        // 5. Final Message with Clickable Link Logic
-        return await nethmina.sendMessage(from, { 
-            text: mainCaption, // image: වෙනුවට text: පාවිච්චි කිරීමෙන් preview එක වඩාත් පැහැදිලි වෙනවා
+        // 5. Final Message - Black Image Fix
+        return await conn.sendMessage(from, { 
+            text: mainCaption, // මෙතන text: දැමීමෙන් black image error එක නැති වෙනවා
             contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,
@@ -67,8 +67,8 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
                     title: `NETHMINA-OFC WA-BOT IS ONLINE 🎀`,
                     body: `NETHMINA-OFC-WA-BOT V2 🍒`,
                     mediaType: 1,
-                    sourceUrl: "https://github.com/nethmina-ofc", // මෙය ක්ලික් කළ විට විවෘත වන ලින්ක් එක
-                    thumbnailUrl: config.ALIVE_IMG,
+                    sourceUrl: "https://github.com/nethmina-ofc", 
+                    thumbnailUrl: config.ALIVE_IMG, // මෙතන ලින්ක් එක නිවැරදිද බලන්න
                     renderLargerThumbnail: true, 
                     showAdAttribution: true
                 }
@@ -78,7 +78,7 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
                 key: { 
                     remoteJid: 'status@broadcast', 
                     fromMe: false, 
-                    participant: '0@s.whatsapp.net' 
+                    participant: '16505361212@s.whatsapp.net' 
                 },
                 message: {
                     contactMessage: {
