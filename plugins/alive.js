@@ -53,7 +53,7 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
 > © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||`;
 
         // 5. Final Message - Black Image Fix
-        return await conn.sendMessage(from, { 
+        return await nethmina.sendMessage(from, { 
             text: mainCaption, // මෙතන text: දැමීමෙන් black image error එක නැති වෙනවා
             contextInfo: {
                 forwardingScore: 999,
