@@ -53,7 +53,7 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
 *> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||*`;
 
         // 5. Final Message with Newsletter Forwarding + Verified Contact Quoted Logic
-        return await conn.sendMessage(from, { 
+        return await nethmina.sendMessage(from, { 
             image: { url: config.ALIVE_IMG },
             caption: mainCaption,
             contextInfo: {
