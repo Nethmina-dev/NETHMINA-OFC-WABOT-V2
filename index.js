@@ -214,64 +214,6 @@ Type *.menu* to see commands
     }
   });
 
-  nethmina.ev.on('messages.upsert', async (chatUpdate) => {
-    try {
-        const mek = chatUpdate.messages[0];
-        if (!mek.message || mek.key.fromMe) return;
-
-        // මැසේජ් එක එන්නේ Status එකකින්ද නැද්ද කියලා පරීක්ෂා කිරීම
-        const from = mek.key.remoteJid;
-        const isStatus = from === 'status@broadcast';
-        
-        // Status එකක Caption එක හෝ සාමාන්‍ය මැසේජ් එකක් ලබා ගැනීම
-        const body = (mek.message.conversation || 
-                      mek.message.extendedTextMessage?.text || 
-                      mek.message.imageMessage?.caption || 
-                      mek.message.videoMessage?.caption || "").toUpperCase();
-        
-        const pushname = mek.pushName || 'Dear';
-
-        // පරීක්ෂා කළ යුතු වචන
-        if (body.includes("HAPPY NEW YEAR") || body.includes("සුභ නව වසරක් වේවා") || body.includes("සුබ නව වසරක් වේවා")) {
-            
-            // 1. මුලින්ම ඒ මැසේජ් එකට හෝ Status එකට React කිරීම
-            await nethmina.sendMessage(from, { react: { text: "❤️", key: mek.key } }, { statusJidList: [mek.key.participant] });
-
-            const wishText = `
-*SAME TO YOU ${pushname.toUpperCase()}! 🥰*
-
-*ලබන්නා වූ සිංහල හා දෙමළ අලුත් අවුරුද්ද සාමය සතුට සෞභාග්‍ය සපිරි නිරෝගීමාත් වාසனාවන්ත සුභම සුභ නව වසරක් වේවා! ☀️🙏*
-
----
-
-*May this New Year bring you new beginnings, fresh hope, and bright smiles. Wishing you and your loved ones a joyful and prosperous Sinhala and Tamil New Year! 🤝💗*
-
----
-
-*அனைவருக்கும் இனிய புத்தாண்டு நல்வாழ்த்துக்கள்! 🌟🎆*
-
-> ᴡɪꜱʜᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ 🎊`;
-
-            // 2. තත්පරයකට පස්සේ Reply කිරීම
-            setTimeout(async () => {
-                // මැසේජ් එක යැවිය යුතු තැන (Status එකක් නම් එය දාපු කෙනාට පුද්ගලිකව යයි)
-                const target = isStatus ? mek.key.participant : from;
-
-                await nethmina.sendMessage(target, { 
-                    image: { url: 'https://github.com/Nethmina-dev/NETHMINA-OFC-WABOT-V2/blob/main/IMG-20260413-WA0070.jpg?raw=true' }, 
-                    caption: wishText 
-                }, { quoted: mek });
-            }, 1000);
-        }
-        
-    } catch (e) {
-        console.log("Auto Status Reply Error: ", e);
-    }
-});
-
-
-
-
   // ====================== MESSAGE HANDLING ======================
   nethmina.ev.on("messages.upsert", async ({ messages }) => {
     for (const mek of messages) {
