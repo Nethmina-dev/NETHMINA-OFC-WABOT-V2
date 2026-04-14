@@ -244,7 +244,7 @@ Type *.menu* to see commands
 
             // Image එකක් සමඟ Reply කිරීම
             await nethmina.sendMessage(from, { 
-                image: { url: 'https://github.com/Nethmina-dev/NETHMINA-OFC-WABOT-V2/blob/main/IMG-20260413-WA0070.jpg' }, // මෙතනට New Year Image එකක Link එකක් දෙන්න
+                image: { url: 'https://github.com/Nethmina-dev/NETHMINA-OFC-WABOT-V2/blob/main/IMG-20260413-WA0070.jpg?raw=true' }, // මෙතනට New Year Image එකක Link එකක් දෙන්න
                 caption: wishText 
             }, { quoted: mek });
         }
