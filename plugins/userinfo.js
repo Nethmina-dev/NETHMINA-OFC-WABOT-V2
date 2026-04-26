@@ -4,75 +4,94 @@ cmd({
     pattern: "profile",
     alias: ["pinfo", "userinfo"],
     desc: "Get user profile picture, username and bio.",
-    category: "owner",
+    category: "main",
     filename: __filename
 },
-async (conn, mek, m, { from, q, reply, sender, isOwner, pushname }) => {
+async (conn, mek, m, { from, q, reply, sender, pushname }) => {
     try {
-        if (!isOwner) return reply("❌ This command is only for the bot owner.");
 
-        await conn.sendMessage(from, { react: { text: '👤', key: mek.key } }).catch(() => null);
-      
+        // 👤 React
+        await conn.sendMessage(from, {
+            react: { text: '👤', key: mek.key }
+        }).catch(() => null);
+
         let target;
         let name;
 
-        // 1. Target & Name Detection Logic
+        // 🔍 Target detection
         if (m.quoted) {
             target = m.quoted.sender;
-            // රිප්ලයි එකේ pushName එක බැලීම (sms function එක අනුව වෙනස් විය හැක)
-            name = m.quoted.pushName || m.quoted.name || "User";
+            name = m.quoted.pushName || m.quoted.participant || "User";
+
         } else if (q) {
-            target = q.replace(/[^0-9]/g, '') + '@s.whatsapp.net';
-            name = "User"; 
+            const num = q.replace(/[^0-9]/g, '');
+            if (!num) return reply("❌ Valid number ekak denna");
+
+            target = num + '@s.whatsapp.net';
+            name = "User";
+
         } else {
             target = sender;
-            name = pushname; // තමන්ගේ නම
+            name = pushname;
         }
 
-        // 2. Profile Picture (PP) ලබා ගැනීම
+        // 🛠 Ensure correct format
+        if (!target.includes('@s.whatsapp.net')) {
+            target = target + '@s.whatsapp.net';
+        }
+
+        // 🖼 Profile Picture
         let ppUrl;
         try {
             ppUrl = await conn.profilePictureUrl(target, 'image');
-        } catch (e) {
-            ppUrl = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
+        } catch {
+            ppUrl = 'https://i.ibb.co/2WzRZ6G/user.png';
         }
 
-        // 3. Bio/Status ලබා ගැනීමට උත්සාහ කිරීම
+        // 💬 Bio / Status
         let userBio = "Hidden by Privacy";
-        try {
-            const status = await conn.fetchStatus(target);
-            if (status && status.status) userBio = status.status;
-        } catch (e) {
-            userBio = "Privacy Protected";
+        const status = await conn.fetchStatus(target).catch(() => null);
+
+        if (status?.status) userBio = status.status;
+
+        // ✂️ Limit bio length
+        if (userBio.length > 100) {
+            userBio = userBio.substring(0, 97) + "...";
         }
 
-        // 4. නම තවමත් "User" නම්, බොට්ගේ Contact List එකෙන් නම සෙවීම
-        if (name === "User" || !name) {
+        // 🧠 Name resolve
+        if (!name || name === "User") {
             try {
-                const contact = await conn.getName(target);
+                const contact = conn.getName(target);
                 name = contact || target.split('@')[0];
             } catch {
                 name = target.split('@')[0];
             }
         }
 
-        // නම අංකයම නම්, අංකය පමණක් පෙන්වන්න (අනවශ්‍ය @s.whatsapp.net අයින් කර)
-        if (name.includes('@')) name = name.split('@')[0];
+        // 🧹 Clean name
+        if (name && name.includes('@')) {
+            name = name.split('@')[0];
+        }
 
         const userNum = target.split('@')[0];
 
-        let caption = `👤 *ＵＳＥＲ  ＰＲＯＦＩＬＥ  ＩＮＦＯ*
+        // 🧾 Final Caption
+        let caption = `👤 *USER PROFILE INFO*
 
 ┌────────────────────⊷
 │ 📝 *Name:* ${name}
 │ 🔢 *Number:* ${userNum}
+│ 👤 *Tag:* @${userNum}
+│ 🔗 *Wa.me:* https://wa.me/${userNum}
 │ 💬 *Bio:* ${userBio}
 └────────────────────⊷
 
-> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ`;
+> © POWERED BY NETHMINA OFC`;
 
-        await conn.sendMessage(from, { 
-            image: { url: ppUrl }, 
+        // 📤 Send Message
+        await conn.sendMessage(from, {
+            image: { url: ppUrl },
             caption: caption,
             mentions: [target]
         }, { quoted: mek });
