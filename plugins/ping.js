@@ -7,19 +7,31 @@ cmd(
     category: "main",
     filename: __filename,
   },
-  async (nethmina, mek, m, { reply, from }) => {
-    // 1️⃣ React to the message
+  async (nethmina, mek, m, { from }) => {
+
+    // 1. React to the message
     try {
-      await nethmina.sendMessage(from, { react: { text: "🏓", key: mek.key } });
+      await nethmina.sendMessage(from, {
+        react: { text: "🏓", key: mek.key },
+      });
     } catch (e) {
       console.log("Reaction failed:", e);
     }
 
-    // 2️⃣ Ping response
+    // 2. Send initial pong message
     const start = Date.now();
-    await reply("🏓 Pinging...");
-    const end = Date.now();
-    await reply(`🏓 Pong! Response time: *${end - start}ms*`);
+    const sent = await nethmina.sendMessage(
+      from,
+      { text: "🏓 Pong!" },
+      { quoted: mek }
+    );
+
+    // 3. Calculate latency and edit the message
+    const latency = Date.now() - start;
+    await nethmina.sendMessage(from, {
+      text: `🏓 Pong!\n\n*Response time:* ${latency}ms`,
+      edit: sent.key,
+    });
+
   }
 );
-
