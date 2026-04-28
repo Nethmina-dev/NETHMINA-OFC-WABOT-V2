@@ -11,7 +11,7 @@ async (conn, mek, m, { from, body, isOwner, readEnv }) => {
         const msgText = body ? body.toLowerCase().trim() : "";
          const config = await readEnv();
         
-      //  if (config.AUTO_VOICE === 'true') {
+        if (config.AUTO_VOICE === 'true') {
             
             let voiceUrl = '';
 
@@ -33,7 +33,7 @@ async (conn, mek, m, { from, body, isOwner, readEnv }) => {
                     ptt: true // මේක true නිසා Voice Note එකක් ලෙස රවුමට පෙනේ
                 }, { quoted: mek });
             }
-      //  }
+       }
     } catch (e) {
         console.log("Auto Voice Error: ", e);
     }
