@@ -22,11 +22,24 @@ async (nethmina, mek, m, { from, reply }) => {
 
        
         await nethmina.sendPresenceUpdate('recording', from);
+        /*
         await nethmina.sendMessage(from, { 
             audio: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3" }, 
             mimetype: 'audio/mpeg', 
             ptt: false 
         }, { quoted: mek });
+
+        */
+
+
+        const { VoiceNote } = require('golden-queen-voice-note');
+
+// Inside your Baileys message handler:
+await VoiceNote(
+  'https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3', 
+  from,                  
+  nethmina                                      
+);
 
         
         await nethmina.sendMessage(from, {
