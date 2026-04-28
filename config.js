@@ -14,7 +14,7 @@ PREFIX: process.env.PREFIX || ".",
 AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN || "true",
 AUTO_STATUS_REACT: process.env.AUTO_STATUS_REACT || "true",
 ALWAYS_ONLINE: process.env.ALWAYS_ONLINE || "false",
-AUTO_RECORDING: process.env.AUTO_RECORDING || "false",
+AUTO_RECORDING: process.env.AUTO_RECORDING || "true",
 AUTO_TYPING: process.env.AUTO_TYPING || "false",
     
 
