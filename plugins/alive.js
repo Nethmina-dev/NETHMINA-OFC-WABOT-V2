@@ -4,14 +4,14 @@ const { runtime } = require('../lib/functions');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-
+const ffmpegPath = require('ffmpeg-static')
 cmd({
     pattern: "alive",
     desc: "Check bot online status",
     category: "main",
     filename: __filename
 },
-async (nethmina, mek, m, { from, reply }) => {
+async (nethmina, mek, m, { from, pushname, reply }) => {
     try {
         const pushname = m.pushName || 'User';
         await nethmina.sendMessage(from, { react: { text: "🎃", key: m.key } });
@@ -31,15 +31,56 @@ async (nethmina, mek, m, { from, reply }) => {
 
         */
 
+         await nethmina.sendMessage(from, { 
+            video: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3" }, 
+            ptv: true 
+        }, { quoted: mek })
+        
+        await sleep(1000)
+        
+        await nethmina.sendPresenceUpdate('recording', from)
+        
+        const audioUrl = "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3"
+        const inputPath = `./temp_alive_${Date.now()}.mp3`
+        const outputPath = `./temp_alive_${Date.now()}.opus`
+
+        const response = await axios({
+            method: 'get',
+            url: audioUrl,
+            responseType: 'stream'
+        })
+        
+        const writer = fs.createWriteStream(inputPath)
+        response.data.pipe(writer)
+
+        writer.on('finish', () => {
+            
+            exec(`"${ffmpegPath}" -i ${inputPath} -c:a libopus -b:a 64k -vbr on -f ogg ${outputPath}`, async (error) => {
+                if (error) {
+                    console.error("FFmpeg Error:", error)
+                    await conn.sendMessage(from, { audio: { url: audioUrl }, mimetype: "audio/mpeg", ptt: true }, { quoted: mek })
+                } else {
+                    const buffer = fs.readFileSync(outputPath)
+                    await conn.sendMessage(from, {
+                        audio: buffer,
+                        mimetype: 'audio/ogg; codecs=opus',
+                        ptt: true
+                    }, { quoted: mek })
+                }
+
+                if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath)
+                if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath)
+            })
+        })
 
         const { VoiceNote } = require('golden-queen-voice-note');
 
 // Inside your Baileys message handler:
-await VoiceNote(
+/*await VoiceNote(
   'https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3', 
   from,                  
   nethmina                                      
-);
+);*/
 
         
         await nethmina.sendMessage(from, {
@@ -49,8 +90,9 @@ await VoiceNote(
         }, { quoted: mek });
 
         // 4. Alive Message Caption (Monospace Fixed)
-        const userNumber = m.sender.split('@')[0];
-let mainCaption = `👋  𝐇𝐄𝐋𝐋𝐎, ${m.pushname || 'User'} 𝐈❜𝐀𝐌 𝐀𝐋𝐈𝐕𝐄 𝐍𝐎𝐖 👾
+       
+let mainCaption = `
+👋  𝐇𝐄𝐋𝐋𝐎,  ${pushname} 𝐈❜𝐀𝐌 𝐀𝐋𝐈𝐕𝐄 𝐍𝐎𝐖 👾
 
 ╭─「 ᴅᴀᴛᴇ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ 」
 │📅 \`Date\` : ${date}
@@ -58,7 +100,7 @@ let mainCaption = `👋  𝐇𝐄𝐋𝐋𝐎, ${m.pushname || 'User'} 𝐈❜�
 ╰──────────●●►
 
 ╭─「 ꜱᴛᴀᴛᴜꜱ ᴅᴇᴛᴀɪʟꜱ 」
-│👤 \`User\`: @${userNumber}
+│👤 \`User\`:  ${pushname}
 │✒️ \`Prefix\` : ${config.PREFIX}
 │🧬 \`Version\` : v2.0.0
 │🎈 \`Platform\` : Linux
