@@ -10,26 +10,32 @@ cmd({
 async (conn, mek, m, { from, reply, quoted, body }) => {
     try {
         
-        if (!quoted) return reply("කරුණාකර ස්ටිකර් එකකට රිප්ලයි කරන්න! 😊");
+        if (!quoted) return reply("*Please reply to a sticker. 😊*");
 
+        
         const isSticker = quoted.mtype === 'stickerMessage' || 
                           (quoted.message && quoted.message.stickerMessage);
 
-        if (!isSticker) return reply("*You did not reply to a sticker. Please reply to a sticker. ☺*");
+        if (!isSticker) return reply("*You did not reply to a sticker. Please reply to a sticker. 😊*");
 
+        
         let pack = "💟 𝙽𝙴𝚃𝙷𝙼𝙸𝙽𝙰 - 𝚂𝚃𝙸𝙲𝙺𝙴𝚁𝚂 💟"; 
         let author = "👨🏿‍💻 ɴᴇᴛʜᴍɪɴᴀ ᴏꜰꜰɪᴄɪᴀʟ ᴄᴏᴍᴍᴜɴɪᴛʏ 👨🏿‍💻";
 
-        if (body.includes('|')) {
+        
+        if (body && body.includes('|')) {
             let splitData = body.split('|');
+            // .wm කෑල්ල අයින් කරලා පළවෙනි කොටස pack එකට ගන්නවා
             pack = splitData[0].replace('.wm', '').trim() || pack;
             author = splitData[1].trim() || author;
         }
 
         await conn.sendMessage(from, { react: { text: '🖊️', key: mek.key } });
 
+        
         const buffer = await quoted.download().catch(() => conn.downloadMediaMessage(quoted));
 
+        
         const sticker = new Sticker(buffer, {
             pack: pack,
             author: author,
@@ -39,10 +45,12 @@ async (conn, mek, m, { from, reply, quoted, body }) => {
         });
 
         const stickerBuffer = await sticker.toBuffer();
+        
+       
         return await conn.sendMessage(from, { sticker: stickerBuffer }, { quoted: mek });
 
     } catch (e) {
         console.log("WM Error: ", e);
-        reply("වSomething went wrong! Please try again. 🛠");
+        reply("*Something went wrong! Please try again. 🛠*");
     }
 });
