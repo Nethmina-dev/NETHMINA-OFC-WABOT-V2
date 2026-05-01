@@ -149,6 +149,6 @@ let mainCaption = `
 
     } catch (e) {
         console.error(e);
-        reply(`Error: ${e}`);
+        reply(`*Error:* ${e}`);
     }
 });
