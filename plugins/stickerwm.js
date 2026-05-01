@@ -17,7 +17,7 @@ async (conn, mek, m, { from, reply, quoted, body }) => {
 
         if (!isSticker) return reply("*You did not reply to a sticker. Please reply to a sticker. 🙂*");
 
-        let pack = "💟 ＮＥＴＨＭＩＮＡ - ＳＴＩＣＫＥＲＳ 💟"; 
+        let pack = "💟 𝙽𝙴𝚃𝙷𝙼𝙸𝙽𝙰 - 𝚂𝚃𝙸𝙲𝙺𝙴𝚁𝚂 💟"; 
         let author = "© 🧑🏻‍💻 ɴᴇᴛʜᴍɪɴᴀ ᴏꜰꜰɪᴄɪᴀʟ ᴄᴏᴍᴍᴜɴɪᴛʏ 🧑🏻‍💻";
 
         if (body && body.includes('|')) {
