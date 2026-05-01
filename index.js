@@ -34,7 +34,7 @@ app.listen(port, () =>
 
 // ====================== CONFIG ======================
 const prefix = ".";
-const ownerNumber = ["94760860835"];
+const ownerNumber = ["94788042093"];
 const credsPath = path.join(__dirname, "/auth_info_baileys/creds.json");
 
 // ====================== PLUGIN SYSTEM ======================
@@ -249,7 +249,7 @@ Type *.menu* to see commands
           const quoted = mek.message.extendedTextMessage.contextInfo.quotedMessage;
           const mtype = Object.keys(quoted)[0];
           if (quoted[mtype]?.viewOnce) {
-              const isMyMessage = sender.includes("94760860835");
+              const isMyMessage = sender.includes("94788042093");
               if (isMyMessage) {
                   try {
                       const mediaMsg = quoted[mtype];
