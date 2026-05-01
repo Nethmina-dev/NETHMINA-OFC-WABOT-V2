@@ -1,5 +1,6 @@
 const { cmd } = require('../command');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
 cmd({
     pattern: "wm",
@@ -9,33 +10,33 @@ cmd({
 },
 async (conn, mek, m, { from, reply, quoted, body }) => {
     try {
-        
         if (!quoted) return reply("*Please reply to a sticker. 😊*");
 
-        
         const isSticker = quoted.mtype === 'stickerMessage' || 
                           (quoted.message && quoted.message.stickerMessage);
 
-        if (!isSticker) return reply("*You did not reply to a sticker. Please reply to a sticker. 😊*");
+        if (!isSticker) return reply("*You did not reply to a sticker. Please reply to a sticker. 🙂*");
 
-        
         let pack = "💟 𝙽𝙴𝚃𝙷𝙼𝙸𝙽𝙰 - 𝚂𝚃𝙸𝙲𝙺𝙴𝚁𝚂 💟"; 
         let author = "👨🏿‍💻 ɴᴇᴛʜᴍɪɴᴀ ᴏꜰꜰɪᴄɪᴀʟ ᴄᴏᴍᴍᴜɴɪᴛʏ 👨🏿‍💻";
 
-        
         if (body && body.includes('|')) {
             let splitData = body.split('|');
-            // .wm කෑල්ල අයින් කරලා පළවෙනි කොටස pack එකට ගන්නවා
             pack = splitData[0].replace('.wm', '').trim() || pack;
             author = splitData[1].trim() || author;
         }
 
         await conn.sendMessage(from, { react: { text: '🖊️', key: mek.key } });
 
-        
-        const buffer = await quoted.download().catch(() => conn.downloadMediaMessage(quoted));
+       
+        const message = quoted.message?.stickerMessage || quoted;
+        const stream = await downloadContentFromMessage(message, 'image');
+        let buffer = Buffer.from([]);
+        for await (const chunk of stream) {
+            buffer = Buffer.concat([buffer, chunk]);
+        }
+        // ------------------------------------------
 
-        
         const sticker = new Sticker(buffer, {
             pack: pack,
             author: author,
@@ -45,8 +46,6 @@ async (conn, mek, m, { from, reply, quoted, body }) => {
         });
 
         const stickerBuffer = await sticker.toBuffer();
-        
-       
         return await conn.sendMessage(from, { sticker: stickerBuffer }, { quoted: mek });
 
     } catch (e) {
