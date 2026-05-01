@@ -1,51 +1,45 @@
 const { cmd } = require('../command');
+const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 
 cmd({
     pattern: "wm",
-    alias: ["watermark", "packname"],
-    desc: "Change sticker pack name and author.",
-    category: "main",
+    desc: "Sticker එකේ pack name සහ author name වෙනස් කරයි.",
+    category: "convert",
+    use: ".wm <pack name>|<author name>",
     filename: __filename
 },
-async (conn, mek, m, { from, reply }) => {
+async (conn, mek, m, { from, reply, quoted, body, isCreator }) => {
     try {
-        // 👤 React
-        await conn.sendMessage(from, {
-            react: { text: '🖊️', key: mek.key }
-        }).catch(() => null);
+   
+        if (!quoted || quoted.mtype !== 'stickerMessage') return reply("Please reply to a sticker. 😊");
 
-        // ✅ Check if quoted message is a sticker
-        if (!m.quoted || m.quoted.mtype !== 'stickerMessage') {
-            return reply("❌ Please reply to a sticker to change its watermark.");
+        let pack = "💟 𝙽𝙴𝚃𝙷𝙼𝙸𝙽𝙰 - 𝚂𝚃𝙸𝙲𝙺𝙴𝚁𝚂 💟"; 
+        let author = "👨🏿‍💻 ɴᴇᴛʜᴍɪɴᴀ ᴏꜰꜰɪᴄɪᴀʟ ᴄᴏᴍᴍᴜɴɪᴛʏ 👨🏿‍💻";
+
+        if (body.includes('|')) {
+            pack = body.split('|')[0].replace('.wm ', '');
+            author = body.split('|')[1];
         }
 
-        // 📥 Download the sticker
-        const stickerBuffer = await m.quoted.download();
-        if (!stickerBuffer) return reply("❌ Failed to download sticker.");
+        await conn.sendMessage(from, { react: { text: '🖊️', key: mek.key } });
 
-        // 🏷️ Your custom pack info — edit these!
-        const packname = "NETHMINA OFC";
-        const author = "© Nethmina";
+        const buffer = await quoted.download();
 
-        // 📦 Build sticker with new metadata
-        const { Sticker, StickerTypes } = require('wa-sticker-formatter');
-
-        const sticker = new Sticker(stickerBuffer, {
-            pack: packname,
+        const sticker = new Sticker(buffer, {
+            pack: pack,
             author: author,
-            type: StickerTypes.FULL,
-            quality: 100
+            type: StickerTypes.FULL, // ස්ටිකර් එකේ shape එක ආරක්ෂා කරයි
+            categories: ['🤩', '🎉'],
+            id: '12345',
+            quality: 70,
         });
 
-        const stickerOut = await sticker.toBuffer();
+        const stickerBuffer = await sticker.toBuffer();
 
-        // 📤 Send the new sticker
-        await conn.sendMessage(from, {
-            sticker: stickerOut
-        }, { quoted: mek });
+        return await conn.sendMessage(from, { sticker: stickerBuffer }, { quoted: mek });
 
     } catch (e) {
-        console.error("WM Error:", e);
-        reply("❌ Failed to change sticker watermark.");
+        console.log(e);
+        reply("Something went wrong! Please try again. 🛠");
     }
 });
