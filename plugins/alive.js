@@ -288,3 +288,94 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
         reply(`*Error:* ${e.message}`);
     }
 });
+
+cmd({
+    pattern: "alive2",
+    desc: "Check bot online status",
+    category: "main",
+    filename: __filename
+},
+async (nethmina, mek, m, { from, pushname, reply }) => {
+    try {
+        const userPushname = m.pushName || 'User';
+        await nethmina.sendMessage(from, { react: { text: "🦋", key: m.key } });
+
+        const uptime = runtime(process.uptime());
+        const date = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo' });
+        const time = new Date().toLocaleTimeString('en-US', { hour12: true, timeZone: 'Asia/Colombo' });
+
+        await nethmina.sendPresenceUpdate('recording', from);
+        
+        const audioUrl = "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Voice-notes/alive.mp3";
+        const tempMp3 = path.join(os.tmpdir(), `temp_${Date.now()}.mp3`);
+        const tempOpus = path.join(os.tmpdir(), `temp_${Date.now()}.opus`);
+
+        try {
+            const response = await axios({ url: audioUrl, responseType: 'arraybuffer' });
+            fs.writeFileSync(tempMp3, response.data);
+
+            const { execSync } = require('child_process');
+            execSync(`"${ffmpegPath}" -i ${tempMp3} -c:a libopus -ac 1 -ar 48000 -b:a 12k -application voip ${tempOpus}`);
+
+            if (fs.existsSync(tempOpus)) {
+                const audioBuffer = fs.readFileSync(tempOpus);
+                await nethmina.sendMessage(from, {
+                    audio: audioBuffer,
+                    mimetype: 'audio/ogg; codecs=opus',
+                    ptt: true
+                }, { quoted: mek });
+            } else {
+                throw new Error("Conversion failed");
+            }
+        } catch (vnError) {
+            console.log("FFmpeg error or skip:", vnError.message);
+           
+            await nethmina.sendMessage(from, { 
+                audio: { url: audioUrl }, 
+                mimetype: 'audio/mpeg', 
+                ptt: true 
+            }, { quoted: mek });
+        } finally {
+        
+            if (fs.existsSync(tempMp3)) fs.unlinkSync(tempMp3);
+            if (fs.existsSync(tempOpus)) fs.unlinkSync(tempOpus);
+        }
+
+        await nethmina.sendMessage(from, {
+            video: { url: "https://github.com/Nethmina-dev/BOT-DATA/raw/refs/heads/main/Video-notes/PTV-20250623-WA0021.mp4" },
+            mimetype: 'video/mp4',
+            ptv: true
+        }, { quoted: mek });
+
+        // --- Alive Message Text ---
+        let mainCaption = `👋 𝐇𝐄𝐋𝐋𝐎, ${userPushname} 𝐈❜𝐀𝐌 𝐀𝐋𝐈𝐕𝐄 𝐍𝐎𝐖 👾
+
+╭─「 ᴅᴀᴛᴇ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ 」
+│📅 \`Date\` : ${date}
+│⏰ \`Time\` : ${time}
+╰──────────●●►
+
+╭─「 ꜱᴛᴀᴛᴜꜱ ᴅᴇᴛᴀɪʟꜱ 」
+│👤 \`User\`: ${userPushname}
+│📟 \`Uptime\` : ${uptime}
+╰──────────●●►
+
+> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɴᴇᴛʜᴍɪɴᴀ ᴏꜰᴄ ||`;
+
+        await nethmina.sendMessage(from, { 
+            image: { url: config.ALIVE_IMG },
+            caption: mainCaption,
+            contextInfo: {
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363233544482017@newsletter',
+                    serverMessageId: 143
+                }
+            }
+        }, { quoted: m });
+
+    } catch (e) {
+        console.error(e);
+    }
+});
