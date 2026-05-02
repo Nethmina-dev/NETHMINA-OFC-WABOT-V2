@@ -1,6 +1,7 @@
 const config = require('../config');
 const { cmd } = require('../command');
 const { runtime } = require('../lib/functions');
+const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
