@@ -229,7 +229,12 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
             ptv: true
         }, { quoted: mek });
 
-      
+      if (name && name.includes('@')) {
+            name = name.split('@')[0];
+        }
+
+        const userNum = target.split('@')[0];
+        
         let mainCaption = `👋 𝐇𝐄𝐋𝐋𝐎, ${userPushname} 𝐈❜𝐀𝐌 𝐀𝐋𝐈𝐕𝐄 𝐍𝐎𝐖 👾
 
 ╭─「 ᴅᴀᴛᴇ ɪɴꜰᅩʀᴍᴀᴛɪᴏɴ 」
