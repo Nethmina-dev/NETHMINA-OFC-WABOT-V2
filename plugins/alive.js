@@ -93,7 +93,7 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
         // 4. Alive Message Caption (Monospace Fixed)
        
 let mainCaption = `
-👋  𝐇𝐄𝐋𝐋𝐎,  ${pushname} 𝐈❜𝐀𝐌 𝐀𝐋𝐈𝐕𝐄 𝐍𝐎𝐖 👾
+👋  𝐇𝐄𝐋𝐋𝐎,  ${senderName} 𝐈❜𝐀𝐌 𝐀𝐋𝐈𝐕𝐄 𝐍𝐎𝐖 👾
 
 ╭─「 ᴅᴀᴛᴇ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ 」
 │📅 \`Date\` : ${date}
