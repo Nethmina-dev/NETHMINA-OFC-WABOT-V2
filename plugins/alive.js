@@ -190,7 +190,7 @@ async (nethmina, mek, m, { from, pushname, reply }) => {
 
         await nethmina.sendPresenceUpdate('recording', from);
         
-        const audioUrl = "https://files.catbox.moe/xn9djn.mp3";
+        const audioUrl = "https://saviya-kolla-database.koyeb.app/AUDIO/SAVIYA_1777732918037_twv9lv.mp3";
         const tempDir = os.tmpdir();
         const inputPath = path.join(tempDir, `alive_${Date.now()}.mp3`);
         const outputPath = path.join(tempDir, `alive_${Date.now()}.opus`);
